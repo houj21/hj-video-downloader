@@ -1,5 +1,7 @@
 venv/
+.venv/
 downloads/
+.codebuddy/
 __pycache__/
 *.pyc
 assets/*.mov

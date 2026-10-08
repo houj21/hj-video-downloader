@@ -1,705 +1,289 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ReClip — Free Media Downloader</title>
+  <title>HJ 视频下载 — 粘贴链接，一键保存全网视频</title>
+  <meta name="description" content="基于 yt-dlp 的多平台视频下载工具，支持 MP4 / MP3、清晰度选择、批量下载，移动端可用。">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #f4f1eb;
-      --fg: #3a3a38;
-      --accent: #e85d2a;
-      --accent-hover: #d04e1f;
-      --muted: #9c9889;
-      --card: #fff;
-      --card-border: #e2ded6;
-      --success: #2d8a4e;
-      --error: #c43d3d;
-      --radius: 14px;
-      --shimmer: linear-gradient(90deg, #ebe8e2 25%, #f0ede7 50%, #ebe8e2 75%);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: 'DM Mono', monospace;
-      background: var(--bg);
-      color: var(--fg);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      opacity: 0.03;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-      background-size: 128px;
-    }
-
-    .page {
-      max-width: 620px;
-      margin: 0 auto;
-      padding: 60px 24px 80px;
-    }
-
-    .brand { margin-bottom: 48px; }
-    .brand h1 {
-      font-family: 'Instrument Serif', serif;
-      font-size: 4.2rem;
-      font-weight: 400;
-      letter-spacing: -0.03em;
-      line-height: 1;
-      color: var(--fg);
-    }
-    .brand h1 em { font-style: italic; color: var(--accent); }
-    .brand p {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: var(--muted);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 18px 20px;
-      border: 1.5px solid var(--card-border);
-      border-radius: var(--radius);
-      background: var(--card);
-      color: var(--fg);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.88rem;
-      outline: none;
-      resize: none;
-      min-height: 56px;
-      transition: border-color 0.25s, box-shadow 0.25s;
-      margin-bottom: 6px;
-    }
-    textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(232, 93, 42, 0.08);
-    }
-    textarea::placeholder { color: var(--muted); }
-
-    .hint {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-bottom: 20px;
-      letter-spacing: 0.02em;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 6px;
-      align-items: center;
-    }
-    .pill-group {
-      display: flex;
-      border: 1.5px solid var(--card-border);
-      border-radius: 10px;
-      overflow: hidden;
-      background: var(--card);
-    }
-    .pill {
-      padding: 9px 18px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.76rem;
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-    .pill.active { background: var(--fg); color: var(--bg); }
-    .pill:not(.active):hover { color: var(--fg); }
-
-    .fetch-btn {
-      flex: 1;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      background: var(--accent);
-      color: #fff;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.82rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .fetch-btn:hover { background: var(--accent-hover); }
-    .fetch-btn:active { transform: scale(0.98); }
-    .fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    /* Cards */
-    .cards { margin-top: 24px; }
-
-    .card {
-      display: flex;
-      gap: 14px;
-      border: 1.5px solid var(--card-border);
-      border-radius: var(--radius);
-      background: var(--card);
-      padding: 14px;
-      margin-bottom: 10px;
-      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .card-thumb {
-      width: 120px;
-      min-width: 120px;
-      height: 80px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--card-border);
-      flex-shrink: 0;
-      position: relative;
-    }
-    .card-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    /* No-thumbnail icon */
-    .card-thumb .no-thumb {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-    }
-    .card-thumb .no-thumb svg {
-      width: 28px;
-      height: 28px;
-      opacity: 0.5;
-    }
-
-    /* Shimmer skeleton for loading state */
-    .card-thumb.loading {
-      background: var(--shimmer);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-    .skeleton-line {
-      height: 12px;
-      border-radius: 4px;
-      background: var(--shimmer);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      margin-bottom: 6px;
-    }
-    .skeleton-line.short { width: 40%; height: 10px; }
-    .skeleton-line.medium { width: 75%; }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    .card-body {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .card-title {
-      font-family: 'Instrument Serif', serif;
-      font-size: 1rem;
-      line-height: 1.3;
-      color: var(--fg);
-      margin-bottom: 2px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .card-meta {
-      font-size: 0.68rem;
-      color: var(--muted);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .card-dl-btn {
-      padding: 6px 14px;
-      border: none;
-      border-radius: 7px;
-      background: var(--fg);
-      color: var(--bg);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-    .card-dl-btn:hover { background: #2d2d2a; }
-    .card-dl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .card-dl-btn.done { background: var(--success); color: #fff; }
-    .card-dl-btn.error { background: var(--error); color: #fff; }
-
-    .card-status {
-      font-size: 0.68rem;
-      color: var(--muted);
-    }
-    .card-status.downloading { color: var(--accent); }
-    .card-status.done { color: var(--success); }
-    .card-status.error { color: var(--error); }
-
-    .q-chip {
-      padding: 4px 10px;
-      border: 1.5px solid var(--card-border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.65rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .q-chip.active {
-      border-color: var(--fg);
-      color: var(--fg);
-      background: rgba(26,26,24,0.04);
-    }
-    .q-chip:hover:not(.active) { border-color: var(--muted); }
-
-    /* Error card */
-    .card.card-error {
-      border-color: rgba(196, 61, 61, 0.2);
-      background: rgba(196, 61, 61, 0.03);
-    }
-    .card-error-icon {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(196, 61, 61, 0.08);
-      color: var(--error);
-    }
-    .card-error-icon svg {
-      width: 24px;
-      height: 24px;
-    }
-    .card-error-msg {
-      font-size: 0.72rem;
-      color: var(--error);
-      margin-top: 2px;
-      line-height: 1.4;
-    }
-    .card-error-url {
-      font-size: 0.65rem;
-      color: var(--muted);
-      word-break: break-all;
-      margin-top: 4px;
-    }
-
-    /* Download all bar */
-    .dl-all-bar {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
-    .dl-all-btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: var(--fg);
-      color: var(--bg);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.82rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .dl-all-btn:hover { background: #2d2d2a; }
-    .dl-all-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .spin {
-      display: inline-block;
-      width: 10px; height: 10px;
-      border: 2px solid currentColor;
-      border-right-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .footer {
-      margin-top: 48px;
-      text-align: center;
-      font-size: 0.68rem;
-      color: var(--muted);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      line-height: 1.8;
-    }
-
-    /* Mobile */
-    @media (max-width: 500px) {
-      .brand h1 { font-size: 3rem; }
-      .page { padding: 40px 16px 60px; }
-      .card { flex-direction: column; gap: 10px; }
-      .card-thumb {
-        width: 100%;
-        min-width: unset;
-        height: 160px;
-      }
-      .card-title { white-space: normal; }
-      .controls { flex-wrap: wrap; }
-      .fetch-btn { width: 100%; }
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <div class="page">
-    <div class="brand">
-      <h1>Re<em>Clip</em></h1>
-      <p>Free media downloader</p>
+
+  <!-- ============ Navigation ============ -->
+  <header class="nav">
+    <div class="container nav__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <span class="brand__name">HJ<span>视频下载</span></span>
+      </a>
+
+      <nav class="nav__links">
+        <a class="nav__link is-active" href="/">首页</a>
+        <a class="nav__link" href="/pricing">定价</a>
+        <a class="nav__link" href="#platforms">支持平台</a>
+      </nav>
+
+      <a class="nav__cta" href="/pricing">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
+        开通会员
+      </a>
+
+      <button class="nav__burger" id="burger" aria-label="打开菜单">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
     </div>
 
-    <textarea id="urls" placeholder="Paste one or more URLs..." rows="2"></textarea>
-    <p class="hint">Multiple links? Separate with spaces, commas, or newlines.</p>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="/">首页</a>
+      <a href="/pricing">定价 · 开通会员</a>
+      <a href="#platforms">支持平台</a>
+    </div>
+  </header>
 
-    <div class="controls">
-      <div class="pill-group">
-        <button class="pill active" data-format="video" onclick="setFormat(this)">MP4</button>
-        <button class="pill" data-format="audio" onclick="setFormat(this)">MP3</button>
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="hero__grid-lines" aria-hidden="true"></div>
+
+    <div class="container hero__content">
+      <div class="hero__badge"><i></i> 已支持 1000+ 站点 · 内核 yt-dlp</div>
+
+      <h1 class="hero__title">粘贴链接，<em>一键下载</em>全网视频</h1>
+      <p class="hero__sub">MP4 / MP3 任意选择，清晰度自由挑选，批量解析一次搞定，手机浏览器同样好用</p>
+
+      <div class="searchbar">
+        <span class="searchbar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </span>
+        <input class="searchbar__input" id="urlInput" type="text"
+               placeholder="粘贴视频链接，多个链接用空格分隔"
+               aria-label="视频链接" autocomplete="off">
+        <button class="searchbar__btn" id="parseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span>解析</span>
+        </button>
       </div>
-      <button class="fetch-btn" id="goBtn" onclick="go()">Fetch</button>
+
+      <p class="hero__hint">支持单个视频、合集与播放列表，解析后可直接保存到本地</p>
+
+      <div class="hero__history" id="history"></div>
+
+      <div class="chips">
+        <span class="chip"><i class="chip__dot chip__dot--yt"></i>YouTube</span>
+        <span class="chip"><i class="chip__dot chip__dot--bili"></i>哔哩哔哩</span>
+        <span class="chip"><i class="chip__dot chip__dot--douyin"></i>抖音</span>
+        <span class="chip"><i class="chip__dot chip__dot--weibo"></i>微博</span>
+        <span class="chip"><i class="chip__dot chip__dot--xhs"></i>小红书</span>
+        <span class="chip"><i class="chip__dot chip__dot--x"></i>Twitter / X</span>
+        <span class="chip"><i class="chip__dot"></i>Instagram</span>
+        <span class="chip"><i class="chip__dot"></i>还有 1000+ 站点</span>
+      </div>
     </div>
+  </section>
 
-    <div id="cards" class="cards"></div>
+  <!-- ============ Supported platforms ============ -->
+  <section class="section" id="platforms">
+    <div class="container">
+      <div class="section__head">
+        <div>
+          <h2 class="section__title">支持平台</h2>
+          <p class="section__desc">内核 yt-dlp 已适配 1000+ 站点，以下为常用平台及其下载能力</p>
+        </div>
+        <a class="btn btn--ghost" href="https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md" target="_blank" rel="noopener">完整支持列表</a>
+      </div>
 
-    <div class="footer">
-      YouTube &middot; TikTok &middot; Instagram &middot; Twitter/X &middot; Reddit &middot; Facebook<br>
-      Vimeo &middot; Twitch &middot; Dailymotion &middot; SoundCloud &middot; Loom &middot; Streamable<br>
-      Pinterest &middot; Tumblr &middot; Threads &middot; LinkedIn &middot; 1000+ more
+      <div class="platform-grid">
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot chip__dot--yt"></i>YouTube</div>
+          <p class="platform-card__desc">视频与音频下载，支持高帧率与直播回放</p>
+          <div class="platform-card__tags"><span>最高 4K</span><span>MP3</span><span>直播回放</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot chip__dot--bili"></i>哔哩哔哩</div>
+          <p class="platform-card__desc">视频与音频下载，配合 Cookie 可解锁大会员清晰度</p>
+          <div class="platform-card__tags"><span>最高 1080P+</span><span>MP3</span><span>合集批量</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot chip__dot--douyin"></i>抖音</div>
+          <p class="platform-card__desc">短视频无水印下载，支持图集与原声提取</p>
+          <div class="platform-card__tags"><span>无水印</span><span>图集</span><span>MP3</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot chip__dot--weibo"></i>微博</div>
+          <p class="platform-card__desc">微博视频与秒拍内容一键解析保存</p>
+          <div class="platform-card__tags"><span>视频</span><span>高清</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot chip__dot--xhs"></i>小红书</div>
+          <p class="platform-card__desc">笔记视频与图集下载，保留原始画质</p>
+          <div class="platform-card__tags"><span>视频</span><span>图集</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot chip__dot--x"></i>Twitter / X</div>
+          <p class="platform-card__desc">推文视频与 GIF 下载，支持多视频推文</p>
+          <div class="platform-card__tags"><span>视频</span><span>GIF</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot"></i>Instagram</div>
+          <p class="platform-card__desc">Reels、帖子与快拍视频下载（公开内容）</p>
+          <div class="platform-card__tags"><span>Reels</span><span>视频</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot"></i>TikTok</div>
+          <p class="platform-card__desc">国际版短视频下载，支持无水印与原声</p>
+          <div class="platform-card__tags"><span>无水印</span><span>MP3</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot"></i>Vimeo</div>
+          <p class="platform-card__desc">高清视频下载，创作者平台内容完整支持</p>
+          <div class="platform-card__tags"><span>最高 4K</span><span>视频</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot"></i>Twitch</div>
+          <p class="platform-card__desc">直播回放（VOD）与片段剪辑下载</p>
+          <div class="platform-card__tags"><span>VOD</span><span>剪辑</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot"></i>SoundCloud</div>
+          <p class="platform-card__desc">音乐与播客音频提取，输出 MP3 格式</p>
+          <div class="platform-card__tags"><span>MP3</span><span>播客</span></div>
+        </div>
+        <div class="platform-card">
+          <div class="platform-card__head"><i class="chip__dot"></i>更多平台</div>
+          <p class="platform-card__desc">Facebook、Reddit、Pinterest、LinkedIn、Dailymotion 等 1000+ 站点</p>
+          <div class="platform-card__tags"><span>1000+ 站点</span></div>
+        </div>
+      </div>
+
+      <p class="platform-note">
+        提示：部分平台的登录内容（如 B 站大会员清晰度、Instagram 私密内容）需在服务端放置 <code>cookies.txt</code> 后可用。
+        请仅下载你拥有合法权利或已获授权的内容，并遵守各平台服务条款。
+      </p>
     </div>
-  </div>
+  </section>
 
-  <script>
-    let currentFormat = 'video';
-    let cardData = [];
+  <!-- ============ Results ============ -->
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <div>
+          <h2 class="section__title">解析结果</h2>
+          <p class="section__desc">选择清晰度后下载，音频模式可直接抽取 MP3</p>
+        </div>
+        <div class="switch" role="group" aria-label="下载格式">
+          <button class="switch__btn is-active" data-format="video">MP4 视频</button>
+          <button class="switch__btn" data-format="audio">MP3 音频</button>
+        </div>
+      </div>
 
-    function setFormat(btn) {
-      document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFormat = btn.dataset.format;
-    }
+      <div class="video-grid" id="cards"></div>
 
-    function parseUrls(text) {
-      return [...new Set(text.split(/[\s,]+/).map(u => u.trim()).filter(u => u.startsWith('http')))];
-    }
+      <div class="download-all is-hidden" id="downloadAllBar">
+        <button class="btn btn--primary btn--block" id="downloadAllBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          全部下载
+        </button>
+      </div>
+    </div>
+  </section>
 
-    function fmtDur(s) {
-      if (!s) return '';
-      const m = Math.floor(s / 60);
-      const sec = Math.floor(s % 60);
-      return `${m}:${sec.toString().padStart(2, '0')}`;
-    }
+  <!-- ============ Download queue ============ -->
+  <section class="section section--tight is-hidden" id="queueSection">
+    <div class="container">
+      <div class="section__head">
+        <div>
+          <h2 class="section__title">下载队列</h2>
+          <p class="section__desc">任务在服务器后台执行，完成后点击「保存到本地」</p>
+        </div>
+      </div>
+      <div class="queue" id="queue" role="status" aria-live="polite"></div>
+    </div>
+  </section>
 
-    function esc(s) {
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
-    }
-
-    function friendlyError(err) {
-      if (err.includes('Unsupported URL')) return 'This URL is not supported';
-      if (err.includes('Video unavailable')) return 'Video is unavailable or private';
-      if (err.includes('Private video')) return 'This video is private';
-      if (err.includes('HTTP Error 403')) return 'Access denied by the platform';
-      if (err.includes('HTTP Error 404')) return 'Video not found';
-      if (err.includes('copyright')) return 'Video blocked due to copyright';
-      if (err.includes('geo')) return 'Video not available in your region';
-      if (err.includes('timed out') || err.includes('Timed out')) return 'Request timed out — try again';
-      if (err.includes('network') || err.includes('Network')) return 'Network error — check your connection';
-      return err.length > 80 ? err.slice(0, 80) + '...' : err;
-    }
-
-    document.getElementById('urls').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); }
-    });
-
-    async function go() {
-      const urls = parseUrls(document.getElementById('urls').value);
-      if (!urls.length) return;
-
-      const btn = document.getElementById('goBtn');
-      const container = document.getElementById('cards');
-      btn.disabled = true;
-      btn.textContent = 'Loading...';
-      container.innerHTML = '';
-      cardData = [];
-
-      // Check if youtube playlist URL
-      for (let i = 0; i < urls.length; i++) {
-        if (urls[i].includes('list=')) {
-          const res = await fetch('/api/playlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: urls[i] }),
-          });
-          const data = await res.json();
-          if (data.urls) {
-            // replace playlist URL with individual video URLs
-            urls.splice(i, 1, ...data.urls);
-          }
-        }
-      }
-
-      for (let i = 0; i < urls.length; i++) {
-        const url = urls[i];
-        const idx = cardData.length;
-        cardData.push({ url, status: 'loading' });
-        renderCard(idx);
-
-        try {
-          const res = await fetch('/api/info', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url }),
-          });
-          const data = await res.json();
-          if (data.error) {
-            cardData[idx] = { ...cardData[idx], status: 'info-error', error: data.error };
-          } else {
-            cardData[idx] = {
-              ...cardData[idx],
-              status: 'ready',
-              title: data.title || '',
-              thumbnail: data.thumbnail || '',
-              duration: data.duration,
-              uploader: data.uploader || '',
-              formats: data.formats || [],
-              selectedFormatId: data.formats?.[0]?.id || null,
-            };
-          }
-        } catch (err) {
-          cardData[idx] = { ...cardData[idx], status: 'info-error', error: err.message };
-        }
-        renderCard(idx);
-      }
-
-      if (cardData.filter(c => c.status === 'ready').length > 1) {
-        renderDownloadAll();
-      }
-
-      btn.disabled = false;
-      btn.textContent = 'Fetch';
-    }
-
-    function renderCard(idx) {
-      const c = cardData[idx];
-      let el = document.getElementById(`card-${idx}`);
-      if (!el) {
-        el = document.createElement('div');
-        el.id = `card-${idx}`;
-        el.className = 'card';
-        document.getElementById('cards').appendChild(el);
-      }
-
-      // Loading skeleton
-      if (c.status === 'loading') {
-        el.className = 'card';
-        el.innerHTML = `
-          <div class="card-thumb loading"></div>
-          <div class="card-body">
-            <div class="skeleton-line medium"></div>
-            <div class="skeleton-line short"></div>
-          </div>
-        `;
-        return;
-      }
-
-      // Error state
-      if (c.status === 'info-error') {
-        el.className = 'card card-error';
-        el.innerHTML = `
-          <div class="card-thumb">
-            <div class="card-error-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+  <!-- ============ Upsell ============ -->
+  <section class="section">
+    <div class="container">
+      <div class="upsell">
+        <div class="upsell__inner">
+          <div>
+            <span class="upsell__tag">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.3 6.2H21l-5.2 3.9 1.9 6.4-5.7-4-5.7 4 1.9-6.4L3 8.7h6.7L12 2.5Z"/></svg>
+              专业版
+            </span>
+            <h2 class="upsell__title">解锁 <em>更高画质</em> 与批量不限量</h2>
+            <p class="upsell__desc">免费版每天可下载 5 个视频。升级后解锁 4K 原画、批量不限量、字幕翻译与 AI 视频总结，下载速度也更快。</p>
+            <div class="upsell__cta">
+              <a class="btn btn--gold" href="/pricing">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
+                立即开通
+              </a>
+              <a class="btn btn--ghost" href="/pricing">查看权益对比</a>
+              <span class="upsell__note">随时可取消 · 学习与自用导向</span>
             </div>
           </div>
-          <div class="card-body">
-            <div class="card-title" style="color:var(--error)">Could not fetch video</div>
-            <div class="card-error-msg">${esc(friendlyError(c.error || ''))}</div>
-            <div class="card-error-url">${esc(c.url)}</div>
+
+          <div class="upsell__features">
+            <div class="upsell__feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              4K / 1080P 原画质
+            </div>
+            <div class="upsell__feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              批量下载不限数量
+            </div>
+            <div class="upsell__feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              字幕下载与翻译
+            </div>
+            <div class="upsell__feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              AI 视频内容总结
+            </div>
+            <div class="upsell__feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              极速通道 · 并发下载
+            </div>
+            <div class="upsell__feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              去水印与无广告体验
+            </div>
           </div>
-        `;
-        return;
-      }
-
-      // Ready / downloading / done / error states
-      el.className = 'card';
-      const isAudio = currentFormat === 'audio';
-
-      let thumbHtml;
-      if (isAudio) {
-        thumbHtml = `<div class="no-thumb" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>`;
-      } else if (c.thumbnail) {
-        thumbHtml = `<img src="${c.thumbnail}" alt="">`;
-      } else {
-        thumbHtml = `<div class="no-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>`;
-      }
-
-      let qualityChips = '';
-      if (!isAudio && c.formats && c.formats.length > 1) {
-        qualityChips = c.formats.map(f =>
-          `<button class="q-chip${f.id === c.selectedFormatId ? ' active' : ''}" onclick="pickFormat(${idx}, '${f.id}')">${f.label}</button>`
-        ).join('');
-      }
-
-      let actionHtml = '';
-      if (c.status === 'ready') {
-        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Download</button>${qualityChips}`;
-      } else if (c.status === 'downloading') {
-        actionHtml = `<span class="card-status downloading"><span class="spin"></span> Downloading...</span>`;
-      } else if (c.status === 'done') {
-        actionHtml = `<button class="card-dl-btn done" onclick="saveCard(${idx})">Save</button>
-          <span class="card-status done">${esc(c.filename || '')}</span>`;
-      } else if (c.status === 'error') {
-        actionHtml = `<button class="card-dl-btn" onclick="dlCard(${idx})">Retry</button>
-          <span class="card-status error">${esc(friendlyError(c.error || 'Download failed'))}</span>`;
-      }
-
-      el.innerHTML = `
-        <div class="card-thumb">${thumbHtml}</div>
-        <div class="card-body">
-          <div class="card-title">${esc(c.title || 'Untitled')}</div>
-          <div class="card-meta">${esc(c.uploader)}${c.duration ? ' · ' + fmtDur(c.duration) : ''}</div>
-          <div class="card-actions">${actionHtml}</div>
         </div>
-      `;
-    }
+      </div>
+    </div>
+  </section>
 
-    function renderDownloadAll() {
-      const existing = document.getElementById('dl-all-bar');
-      if (existing) existing.remove();
+  <!-- ============ Footer ============ -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <div class="footer__brand">HJ 视频下载</div>
+        <p class="footer__note">
+          本项目为学习与自用导向的开源实践，内核为 yt-dlp。请仅下载你拥有合法权利或已获授权的内容，
+          并遵守各平台服务条款与当地法律法规；请勿用于下载付费、受版权保护或未经授权的内容，
+          也不要高频请求以免触发平台风控。因使用本工具产生的任何风险由使用者自行承担。
+        </p>
+      </div>
+      <div class="footer__links">
+        <a href="/">首页</a>
+        <a href="/pricing">定价</a>
+        <a href="#platforms">支持平台</a>
+      </div>
+    </div>
+  </footer>
 
-      const bar = document.createElement('div');
-      bar.id = 'dl-all-bar';
-      bar.className = 'dl-all-bar';
-      bar.innerHTML = `<button class="dl-all-btn" onclick="dlAll()">Download All</button>`;
-      document.getElementById('cards').appendChild(bar);
-    }
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
-    function pickFormat(idx, formatId) {
-      cardData[idx].selectedFormatId = formatId;
-      renderCard(idx);
-    }
-
-    async function dlCard(idx) {
-      const c = cardData[idx];
-      c.status = 'downloading';
-      c.error = null;
-      renderCard(idx);
-
-      try {
-        const res = await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: c.url,
-            format: currentFormat,
-            format_id: c.selectedFormatId,
-            title: c.title || '',
-          }),
-        });
-        const data = await res.json();
-        if (data.error) {
-          c.status = 'error';
-          c.error = data.error;
-          renderCard(idx);
-          return;
-        }
-        c.jobId = data.job_id;
-        pollCard(idx);
-      } catch (err) {
-        c.status = 'error';
-        c.error = err.message;
-        renderCard(idx);
-      }
-    }
-
-    function pollCard(idx) {
-      const c = cardData[idx];
-      const iv = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/status/${c.jobId}`);
-          const data = await res.json();
-          if (data.status === 'done') {
-            clearInterval(iv);
-            c.status = 'done';
-            c.filename = data.filename;
-            renderCard(idx);
-            saveCard(idx);
-          } else if (data.status === 'error') {
-            clearInterval(iv);
-            c.status = 'error';
-            c.error = data.error;
-            renderCard(idx);
-          }
-        } catch {
-          clearInterval(iv);
-          c.status = 'error';
-          c.error = 'Lost connection to server';
-          renderCard(idx);
-        }
-      }, 1000);
-    }
-
-    function saveCard(idx) {
-      const c = cardData[idx];
-      if (!c.jobId) return;
-      const a = document.createElement('a');
-      a.href = `/api/file/${c.jobId}`;
-      a.download = c.filename || '';
-      a.click();
-    }
-
-    async function dlAll() {
-      const btn = document.querySelector('.dl-all-btn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Downloading...'; }
-
-      for (let i = 0; i < cardData.length; i++) {
-        if (cardData[i].status === 'ready') {
-          await dlCard(i);
-        }
-      }
-
-      if (btn) { btn.disabled = false; btn.textContent = 'Download All'; }
-    }
-  </script>
+  <script src="/static/js/app.js"></script>
 </body>
 </html>
