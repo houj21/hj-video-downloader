@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 视频总结 — 一分钟读懂一小时视频 | HJ 视频下载</title>
+  <meta name="description" content="粘贴视频链接，AI 自动生成带时间戳的章节大纲、核心要点与思维导图，支持追问与导出 Markdown / Word / PDF。">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- ============ Navigation ============ -->
+  <header class="nav no-print">
+    <div class="container nav__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <span class="brand__name">HJ<span>视频下载</span></span>
+      </a>
+
+      <nav class="nav__links">
+        <a class="nav__link" href="/">首页</a>
+        <a class="nav__link is-active" href="/summarize">AI 总结</a>
+        <a class="nav__link" href="/pricing">定价</a>
+        <a class="nav__link" href="/#platforms">支持平台</a>
+      </nav>
+
+      <a class="nav__cta" href="/pricing">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
+        开通会员
+      </a>
+
+      <button class="nav__burger" id="burger" aria-label="打开菜单">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="/">首页</a>
+      <a href="/summarize">AI 总结</a>
+      <a href="/pricing">定价 · 开通会员</a>
+      <a href="/#platforms">支持平台</a>
+    </div>
+  </header>
+
+  <!-- ============ Hero ============ -->
+  <section class="hero hero--short no-print">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="hero__grid-lines" aria-hidden="true"></div>
+
+    <div class="container hero__content">
+      <div class="hero__badge"><i></i> AI 课代表 · 本地处理 · 数据不出本机</div>
+
+      <h1 class="hero__title">一分钟<em>读懂</em>一小时视频</h1>
+      <p class="hero__sub">粘贴链接，AI 自动提炼带时间戳的章节大纲、核心知识要点与思维导图</p>
+
+      <div class="searchbar">
+        <span class="searchbar__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </span>
+        <input class="searchbar__input" id="urlInput" type="text"
+               placeholder="粘贴视频链接，如 B站 / YouTube / 播客"
+               aria-label="视频链接" autocomplete="off">
+        <button class="searchbar__btn" id="summarizeBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+          <span>开始总结</span>
+        </button>
+      </div>
+
+      <p class="hero__hint" id="llmHint">正在读取模型配置…</p>
+
+      <div class="chips">
+        <span class="chip"><i class="chip__dot chip__dot--bili"></i>哔哩哔哩</span>
+        <span class="chip"><i class="chip__dot chip__dot--yt"></i>YouTube</span>
+        <span class="chip"><i class="chip__dot chip__dot--douyin"></i>抖音</span>
+        <span class="chip"><i class="chip__dot chip__dot--xhs"></i>小红书</span>
+        <span class="chip"><i class="chip__dot"></i>播客 / 演讲 / 课程</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 未配置模型引导 ============ -->
+  <section class="section section--tight no-print" id="configGuide" hidden>
+    <div class="container">
+      <div class="sum-card sum-card--warn">
+        <h2 class="sum-card__title">尚未配置大模型</h2>
+        <p class="sum-card__text">
+          AI 总结需要接入一个 OpenAI 兼容的大模型服务。请复制项目根目录的
+          <code>llm_config.example.bat</code> 为 <code>llm_config.bat</code>，填入 Key 后双击启动即可（Key 不会写入代码）。
+        </p>
+        <pre class="sum-code">set LLM_API_KEY=你的密钥
+set LLM_BASE_URL=https://api.deepseek.com
+set LLM_MODEL=deepseek-flash
+call run.bat</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 流水线进度 ============ -->
+  <section class="section section--tight no-print" id="pipeline" hidden>
+    <div class="container">
+      <div class="sum-card">
+        <ol class="pipeline" id="pipelineList">
+          <li class="pipeline__step" data-stage="fetching"><i>1</i><span>抓取字幕</span></li>
+          <li class="pipeline__step" data-stage="parsing"><i>2</i><span>解析时间轴</span></li>
+          <li class="pipeline__step" data-stage="summarizing"><i>3</i><span>分段理解</span></li>
+          <li class="pipeline__step" data-stage="done"><i>4</i><span>生成大纲</span></li>
+        </ol>
+        <div class="progress">
+          <div class="progress__bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <p class="progress__text" id="progressText">准备中…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 结果区 ============ -->
+  <section class="section" id="result" hidden>
+    <div class="container">
+
+      <!-- 视频信息 + 导出 -->
+      <div class="sum-meta">
+        <img class="sum-meta__cover" id="metaCover" alt="" hidden>
+        <div class="sum-meta__body">
+          <h2 class="sum-meta__title" id="metaTitle"></h2>
+          <p class="sum-meta__sub" id="metaSub"></p>
+          <a class="btn btn--ghost btn--sm no-print" id="metaLink" href="#" target="_blank" rel="noopener">打开原视频</a>
+        </div>
+        <div class="sum-export no-print" id="exportBar">
+          <button class="btn btn--ghost btn--sm" id="copyBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+            复制
+          </button>
+          <button class="btn btn--ghost btn--sm" id="mdBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+            Markdown
+          </button>
+          <button class="btn btn--ghost btn--sm" id="docxBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+            Word
+          </button>
+          <button class="btn btn--primary btn--sm" id="pdfBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h9l4 4v14H6z"/><path d="M6 15h12"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- 一句话总览 -->
+      <div class="sum-card sum-card--overview">
+        <div class="sum-card__label">一句话总览</div>
+        <p class="sum-overview" id="overview"></p>
+      </div>
+
+      <!-- 三段 Tab -->
+      <div class="sum-tabs no-print" role="tablist" aria-label="总结视图">
+        <button class="sum-tab is-active" role="tab" aria-selected="true" data-tab="chapters">章节大纲</button>
+        <button class="sum-tab" role="tab" aria-selected="false" data-tab="keypoints">核心要点</button>
+        <button class="sum-tab" role="tab" aria-selected="false" data-tab="mindmap">思维导图</button>
+      </div>
+
+      <div class="sum-panel is-active" id="panel-chapters" role="tabpanel">
+        <ol class="timeline" id="timeline"></ol>
+      </div>
+
+      <div class="sum-panel" id="panel-keypoints" role="tabpanel">
+        <div class="kp-grid" id="keypoints"></div>
+      </div>
+
+      <div class="sum-panel" id="panel-mindmap" role="tabpanel">
+        <div class="mindmap">
+          <div class="mm-toolbar no-print">
+            <button class="mm-tool" type="button" data-mm="out" title="缩小" aria-label="缩小">&minus;</button>
+            <span class="mm-zoom" id="mmZoom">100%</span>
+            <button class="mm-tool" type="button" data-mm="in" title="放大" aria-label="放大">&#65291;</button>
+            <span class="mm-sep" aria-hidden="true"></span>
+            <button class="mm-tool" type="button" data-mm="fit" title="适应画布">适应</button>
+            <button class="mm-tool" type="button" data-mm="reset" title="实际大小">1:1</button>
+            <span class="mm-hint">拖拽平移 · 滚轮缩放 · 点击节点折叠</span>
+          </div>
+          <div class="mm-canvas" id="mindmap"></div>
+        </div>
+      </div>
+
+      <!-- 追问 -->
+      <div class="sum-card sum-ask no-print">
+        <div class="sum-card__label">继续追问</div>
+        <div class="ask-log" id="askLog"></div>
+        <div class="ask-chips" id="askChips">
+          <button class="chip chip--btn" data-q="这个视频的核心结论是什么？">核心结论是什么？</button>
+          <button class="chip chip--btn" data-q="给我三条可以立刻执行的行动建议">三条行动建议</button>
+          <button class="chip chip--btn" data-q="有哪些关键概念需要我重点理解？">关键概念有哪些？</button>
+        </div>
+        <div class="ask-input">
+          <input class="ask-input__field" id="askField" type="text" placeholder="就这个视频继续提问…" aria-label="提问">
+          <button class="btn btn--primary btn--sm" id="askBtn">提问</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Footer ============ -->
+  <footer class="footer no-print">
+    <div class="container footer__inner">
+      <div>
+        <div class="footer__brand">HJ 视频下载 · AI 总结</div>
+        <p class="footer__note">
+          总结内容由大模型基于视频字幕自动生成，可能存在偏差，重要信息请以原视频为准。
+          请仅对你拥有合法权利或已获授权的内容使用本功能，遵守各平台服务条款与当地法律法规。
+        </p>
+      </div>
+      <div class="footer__links">
+        <a href="/">首页</a>
+        <a href="/summarize">AI 总结</a>
+        <a href="/pricing">定价</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <script src="/static/js/summary.js"></script>
+</body>
+</html>

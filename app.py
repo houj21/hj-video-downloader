@@ -9,7 +9,9 @@ import sys
 import zipfile
 import subprocess
 import threading
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, Response, stream_with_context
+
+import summarizer
 
 app = Flask(__name__)
 
@@ -60,6 +62,10 @@ def child_env():
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     return env
+
+
+# 把项目内已验证的 yt-dlp 工具函数注入总结模块（避免循环导入）
+summarizer.configure(ytdlp=YTDLP, cookie_args=cookie_args, child_env=child_env)
 
 
 def progress_cmd(cmd):
@@ -293,6 +299,11 @@ def pricing():
     return render_template("pricing.html")
 
 
+@app.route("/summarize")
+def summarize_page():
+    return render_template("summarize.html")
+
+
 @app.route("/api/info", methods=["POST"])
 def get_info():
     data = request.json
@@ -424,6 +435,150 @@ def download_file(job_id):
     return send_file(job["file"], as_attachment=True, download_name=job["filename"])
 
 
+# ==================== AI 视频总结 ====================
+
+@app.route("/api/llm/config")
+def llm_config():
+    """供前端展示当前模型与是否已配置 Key（不回传密钥本身）。"""
+    return jsonify({
+        "configured": summarizer.llm_configured(),
+        "base_url": summarizer.LLM_BASE_URL,
+        "model": summarizer.LLM_MODEL,
+    })
+
+
+@app.route("/api/llm/models")
+def llm_models():
+    """拉取大模型平台可用模型列表，便于挑选 LLM_MODEL 的准确 ID。"""
+    try:
+        return jsonify({"models": summarizer.list_models(), "current": summarizer.LLM_MODEL})
+    except summarizer.SummaryError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/summarize", methods=["POST"])
+def start_summary():
+    data = request.json or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "请先粘贴视频链接"}), 400
+    if not url.startswith("http"):
+        return jsonify({"error": "链接格式不正确，请以 http(s) 开头"}), 400
+
+    job_id = uuid.uuid4().hex[:10]
+    jobs[job_id] = {
+        "kind": "summary",
+        "status": "running",
+        "stage": "fetching",
+        "stage_text": "排队中",
+        "percent": 0,
+        "url": url,
+        "created": time.time(),
+    }
+
+    def worker():
+        try:
+            summarizer.run_summary(jobs[job_id], url)
+            jobs[job_id]["status"] = "done"
+        except summarizer.SummaryError as exc:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = str(exc)
+        except Exception as exc:                      # 兜底：不把堆栈暴露给前端
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = f"总结失败：{type(exc).__name__}"
+
+    thread = threading.Thread(target=worker)
+    thread.daemon = True
+    thread.start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/api/summary/status/<job_id>")
+def summary_status(job_id):
+    job = jobs.get(job_id)
+    if not job or job.get("kind") != "summary":
+        return jsonify({"error": "Job not found"}), 404
+    return jsonify({
+        "status": job["status"],
+        "stage": job.get("stage"),
+        "stage_text": job.get("stage_text", ""),
+        "percent": job.get("percent", 0),
+        "error": job.get("error"),
+        "meta": job.get("meta"),
+        "result": job.get("result"),
+        "url": job.get("url"),
+    })
+
+
+@app.route("/api/summary/ask", methods=["POST"])
+def summary_ask():
+    """基于当前视频上下文追问，SSE 流式返回。"""
+    data = request.json or {}
+    job = jobs.get((data.get("job_id") or "").strip())
+    if not job or job.get("kind") != "summary":
+        return jsonify({"error": "任务不存在或已过期，请重新总结"}), 404
+    if job.get("status") != "done":
+        return jsonify({"error": "总结尚未完成"}), 400
+
+    question = (data.get("question") or "").strip()
+    if not question:
+        return jsonify({"error": "请输入问题"}), 400
+
+    history = data.get("history") or []
+    if not isinstance(history, list):
+        history = []
+
+    context = summarizer.build_ask_context(job.get("result") or {}, job.get("transcript") or "")
+    messages = summarizer.build_ask_messages(question, context, history)
+
+    def stream():
+        try:
+            for piece in summarizer.chat_stream(messages):
+                yield "data: " + json.dumps({"delta": piece}, ensure_ascii=False) + "\n\n"
+            yield "data: " + json.dumps({"delta": "", "done": True}, ensure_ascii=False) + "\n\n"
+        except summarizer.SummaryError as exc:
+            yield "data: " + json.dumps({"error": str(exc)}, ensure_ascii=False) + "\n\n"
+        except Exception:
+            yield "data: " + json.dumps({"error": "追问失败，请稍后重试"}, ensure_ascii=False) + "\n\n"
+
+    return Response(stream_with_context(stream()), mimetype="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+    })
+
+
+@app.route("/api/summary/export", methods=["POST"])
+def summary_export():
+    """导出总结结果：md 直接下载，docx 由后端生成。"""
+    data = request.json or {}
+    job = jobs.get((data.get("job_id") or "").strip())
+    if not job or job.get("kind") != "summary":
+        return jsonify({"error": "任务不存在或已过期，请重新总结"}), 404
+    if job.get("status") != "done" or not job.get("result"):
+        return jsonify({"error": "总结尚未完成，无法导出"}), 400
+
+    fmt = (data.get("format") or "md").strip().lower()
+    result = job["result"]
+    meta = job.get("meta") or {}
+    base = summarizer.safe_filename(meta.get("title") or "视频总结")
+
+    if fmt == "docx":
+        try:
+            path = summarizer.to_docx(result, meta)
+        except summarizer.SummaryError as exc:
+            return jsonify({"error": str(exc)}), 500
+        except Exception:                             # 兜底：不把堆栈暴露给前端
+            return jsonify({"error": "Word 导出失败，可先导出 Markdown"}), 500
+        return send_file(path, as_attachment=True, download_name=f"{base}.docx")
+
+    markdown = summarizer.to_markdown(result, meta)
+    return Response(
+        markdown.encode("utf-8"),
+        mimetype="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": summarizer.content_disposition(f"{base}.md")},
+    )
+
+
 def update_ytdlp():
     """Keep extractors fresh; silently skip when offline (or SKIP_YTDLP_UPDATE=1)."""
     if os.environ.get("SKIP_YTDLP_UPDATE") == "1":
@@ -442,5 +597,9 @@ if __name__ == "__main__":
     if os.path.isfile(COOKIE_FILE):
         print(f"[HJ] 使用 Cookie 文件: {COOKIE_FILE}")
     print(f"[HJ] 下载目录: {DOWNLOAD_DIR}（{FILE_TTL // 60} 分钟后自动清理）")
+    if summarizer.llm_configured():
+        print(f"[HJ] AI 总结已启用: {summarizer.LLM_MODEL} @ {summarizer.LLM_BASE_URL}")
+    else:
+        print("[HJ] AI 总结未配置 LLM_API_KEY，总结页将显示配置指引（参考 llm_config.example.bat）")
     print(f"[HJ] 服务已启动: http://{host}:{port}")
     app.run(host=host, port=port)

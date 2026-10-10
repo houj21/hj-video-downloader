@@ -1,12 +1,21 @@
 venv/
 .venv/
-downloads/
-.codebuddy/
-__pycache__/
-*.pyc
 assets/*.mov
 .DS_Store
 .env
 .env.local
 .env.production
 .env.development
+
+# 本地密钥/凭据，切勿提交
+llm_config.bat
+cookies.txt
+
+# 改动前的本地快照存档
+.backups/
+
+# 运行时产物
+downloads/
+__pycache__/
+*.pyc
+.codebuddy/

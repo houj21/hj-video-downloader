@@ -261,6 +261,9 @@ function cardHtml(c, idx) {
     ? `<button class="btn btn--ghost" disabled><span class="spin"></span> 下载中</button>`
     : `<button class="btn btn--primary" data-act="dl" data-idx="${idx}">${ICON.download} ${isAudio ? '下载 MP3' : '下载 MP4'}</button>`;
 
+  // 一键跳到 AI 总结页并自动开始（下载与总结形成闭环）
+  const aiAction = `<a class="btn btn--ghost btn--sm" href="/summarize?url=${encodeURIComponent(c.url)}" title="用 AI 总结这个视频">${ICON.spark} 总结</a>`;
+
   return `<div class="video-card" style="animation-delay:${Math.min(idx * 60, 420)}ms">
     <div class="video-card__thumb">
       ${thumb}
@@ -270,7 +273,7 @@ function cardHtml(c, idx) {
       <div class="video-card__title">${esc(c.title || '未命名视频')}</div>
       <div class="video-card__meta">${esc(c.uploader || '未知来源')}${c.duration ? ' · ' + fmtDur(c.duration) : ''}</div>
       ${formats}
-      <div class="video-card__actions">${action}</div>
+      <div class="video-card__actions">${action}${aiAction}</div>
     </div>
   </div>`;
 }

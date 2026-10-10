@@ -1,0 +1,35 @@
+{
+  // ── 与语言无关的重目录排除（VS Code 核心设置，任何扩展都生效）──
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/downloads/**": true,
+    "**/.git/**": true,
+    "**/__pycache__/**": true
+  },
+  "search.exclude": {
+    "**/.venv/**": true,
+    "**/downloads/**": true,
+    "**/.git/**": true,
+    "**/__pycache__/**": true
+  },
+
+  // ── BasedPyright ──────────────────────────────────────────────
+  // 注意：BasedPyright 不读 python.analysis.* （只支持 python.pythonPath / python.venvPath），
+  // 必须用 basedpyright.analysis.* 命名空间，否则设置会被静默忽略。
+  //
+  // 默认值已是 openFilesOnly（只分析当前打开的文件），这里显式写出以免被其他配置覆盖。
+  "basedpyright.analysis.diagnosticMode": "openFilesOnly",
+
+  // 排除目录。务必保留 "**/.*"：它对应 Pyright 的默认排除项（覆盖 .venv / .git），
+  // 一旦这里省略，默认值会被整份替换，.venv 里的 3700+ 个文件反而会被纳入分析。
+  "basedpyright.analysis.exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    "**/.venv/**",
+    "**/downloads/**"
+  ]
+
+  // 彻底关闭类型检查（转圈必消失，代价是没有类型报错提示）时，取消下一行注释并加逗号：
+  // "basedpyright.analysis.typeCheckingMode": "off"
+}
