@@ -3,9 +3,10 @@
 | 项 | 内容 |
 |---|---|
 | 项目 | HJ 视频下载（`d:/ai/hj-video-downloader`）二期：AI 视频总结模块 |
-| 文档版本 | v1.0 |
+| 文档版本 | v1.1（已实现版） |
 | 创建日期 | 2026-10-09 |
-| 状态 | 方案已确认，待开发 |
+| 更新日期 | 2026-10-10（思维导图重构为 ProcessOn 风格 + 默认接入公益大模型网关） |
+| 状态 | 已实现并上线（本地提交 71bde4b，已推送 origin/main） |
 | 溯源用途 | 本文件为后续开发的**唯一溯源主文档**；若与 `.codebuddy/plans/` 中的计划正文冲突，**以本文为准** |
 
 ---
@@ -69,7 +70,7 @@
 | # | 决策项 | 结论 |
 |---|---|---|
 | Q1 | 产品形态 | **集成进现有下载站**：新增 `/summarize` 页，复用 yt-dlp 与蓝金风格，一套代码一次部署 |
-| Q2 | 大模型接入 | **OpenAI 兼容接口封装**：`BASE_URL` / `KEY` 可切 DeepSeek / 通义 / 智谱 / Moonshot / Ollama |
+| Q2 | 大模型接入 | **OpenAI 兼容接口封装**：三个环境变量 `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` 可切 DeepSeek / 通义 / 智谱 / Moonshot / Ollama / 本地 Ollama；默认接入幻城网安公益大模型网关 `https://api.hcnsec.cn/v1`，模型 `auto`（智能路由，一定可用） |
 | Q3 | 无字幕视频 | **MVP 只处理有字幕视频**，抓不到给出明确可操作提示 |
 | Q4 | MVP 输出 | **全选**：带时间戳章节大纲 + 核心要点（3-10 条 + 一句话总览）+ 思维导图 + AI 追问对话 |
 | Q5 | 导出留存 | **Word / PDF 导出** |
@@ -202,14 +203,24 @@ flowchart TB
 ## 六、关键接口契约
 
 ```python
-# POST /api/summarize              {url} -> {job_id}
-# GET  /api/summary/status/<job_id> -> {status, stage, percent, error?, result?}
-# POST /api/summary/ask            {job_id, question, history[]} -> text/event-stream (SSE)
-# POST /api/summary/export         {job_id, format: "md"|"docx"} -> 附件文件流
-# GET  /api/llm/config             -> {configured, base_url, model}
+# GET  /api/llm/config             -> {configured, base_url, model}        # 不回传密钥
+# GET  /api/llm/models             -> {"models": [...]} | {"error": "..."} # GET {base}/models
+# POST /api/summarize              {url} -> {job_id}                       # 校验 http(s)，后台线程跑
+# GET  /api/summary/status/<job_id> -> {status, stage, stage_text, percent, error, meta, result, url}
+# POST /api/summary/ask            {job_id, question, history[]} -> SSE     # 见下
+# POST /api/summary/export         {job_id, format:"md"|"docx"} -> 文本/附件
 ```
 
-`stage` 取值：`fetching`（抓取字幕）→ `parsing`（解析时间轴）→ `summarizing`（生成总结）→ `done`。
+**`/api/summary/ask` 的 SSE 事件格式**（`summary.js` 的 `pollAsk` 逐条解析）：
+```
+data: {"delta": "片段文本"}        # 流式增量，可能多条
+data: {"delta": "", "done": true} # 正常结束
+data: {"error": "错误摘要"}        # 出错（不回显堆栈/密钥）
+```
+
+**`/api/summary/export` 响应**：`format=md` 返回 `text/markdown` 正文，文件名经 `content_disposition()` 处理（中文名兼容，避免 Werkzeug 抛 `UnicodeEncodeError`）；`format=docx` 后端 `python-docx` 生成并 `send_file` 下载。
+
+**`/api/summary/status` 与前端轮询契约**：`status` ∈ `running` / `done` / `error`；`stage`（仅 running 有意义）∈ `fetching`（抓取字幕）→ `parsing`（解析时间轴）→ `summarizing`（生成总结）；失败时 `status=error` 且带 `error` 文案。`result` 字段见下方 JSON 契约；`meta` 见上。
 
 **模型输出的结构化结果**（前端渲染的唯一数据契约）：
 
@@ -220,20 +231,28 @@ flowchart TB
     {"start": 0, "end": 320, "title": "章节标题", "points": ["要点1", "要点2"]}
   ],
   "keypoints": ["核心知识要点 1", "核心知识要点 2"],
-  "mindmap": "- 主题\n  - 子主题\n    - 叶子节点"
+  "mindmap": "- 主题\n  - 子主题\n    - 叶子节点",
+  "degraded": false
 }
 ```
 
-**环境变量**（新增）：
+- `degraded: true` 表示结构化解析最终失败、退回纯文本（`overview` 为截断原文、`chapters`/`keypoints` 为空），前端应给出"总结可能不完整"的提示，**绝不白屏**。
+- 配套的 `meta`（来自 `fetch_meta`，随 status 一并返回）：`title` / `thumbnail` / `duration` / `uploader` / `webpage_url`，前端用于结果卡片头部与"跳原视频 `&t=<秒>`"链接。
+
+**环境变量**（全部可被环境变量覆盖，定义见 `summarizer.py` 顶部）：
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `LLM_BASE_URL` | `https://api.deepseek.com` | OpenAI 兼容地址 |
-| `LLM_API_KEY` | 空 | 未提供时页面显示配置引导 |
-| `LLM_MODEL` | `deepseek-flash` | 2026-10 官方当前模型名 |
+| `LLM_BASE_URL` | `https://api.hcnsec.cn/v1` | OpenAI 兼容地址；幻城网安公益网关为默认（可改 DeepSeek / 智谱 / Ollama 等） |
+| `LLM_API_KEY` | 空 | 未提供时页面显示配置引导；配置后 `llm_configured()` 返回 True |
+| `LLM_MODEL` | `auto` | 网关智能路由（一定可用）；固定模型请填控制台「模型广场」准确 ID（如 `deepseek-v3.2` / `glm-5.1`） |
 | `LLM_TIMEOUT` | `180` | 单次请求超时秒数 |
-| `SUMMARY_CHUNK_CHARS` | `60000` | 超过该字符数才启用分块 map-reduce |
-| `SUMMARY_MAX_CONCURRENCY` | `3` | LLM 并发信号量 |
+| `LLM_MAX_TOKENS` | `8192` | 单次输出最大 token；网关文档提示过小会被截断，默认给足 |
+| `SUMMARY_CHUNK_CHARS` | `60000` | 字幕超过该字符数才启用分块 map-reduce |
+| `SUMMARY_MAX_CONCURRENCY` | `3` | LLM 并发信号量（与下载信号量分离） |
+| `ASK_CONTEXT_CHARS` | `60000` | 追问时可附带的完整字幕上限；超过则只给总结，不附全文 |
+| `SUB_LANGS` | `zh-Hans,zh-CN,zh,zh-TW,en.*` | 字幕语言优先级（yt-dlp 正则），首选项拿不到再退化为 `all` |
+| `COOKIE_FILE` | `<项目根>/cookies.txt` | 登录态字幕所需 Cookie（Netscape 格式），缺省即项目根 `cookies.txt` |
 
 ---
 
@@ -265,6 +284,7 @@ flowchart TB
   3. 核心要点卡片网格（编号 + 要点）
   4. 思维导图（ProcessOn 风格横向曲线图：SVG 自绘贝塞尔连线、分支配色、可缩放平移、点击节点折叠）
   桌面用锚点 Tab 切换，移动端纵向堆叠。
+- **导图实现位置**（改样式/交互先看这里）：`summary.js` 中 `parseMindmap(text)` 把 Markdown 缩进列表解析为树 → `renderMindmap(text)` 用 SVG 自算布局（按层级分列、贝塞尔曲线连线、各分支配色）渲染 → `mmSetup()` 绑定工具栏（缩放 `data-mm=in/out`、平移拖拽、`fit` 适应、`reset` 1:1、点击节点折叠 `toggleNode`）。数据契约即 `result.mindmap` 那段缩进文本；连线/配色常量集中在 `renderMindmap` 顶部。
 - **AI 追问对话区**：气泡式对话（用户右对齐蓝色、AI 左对齐浅灰卡片），流式打字机效果，底部常用问题快捷 chip。
 - **导出栏 + 页脚**：复制 / Markdown / Word / PDF 四个胶囊按钮（PDF 走打印）；页脚沿用版权声明。
 - **微动效**：卡片渐入上浮、按钮 hover 上移、进度条流动、导图节点 hover 高亮。
@@ -275,36 +295,39 @@ flowchart TB
 
 ```
 d:/ai/hj-video-downloader/
-├── app.py                     # [MODIFY] 新增 5 条路由（/summarize、/api/summarize、
-│                              #   /api/summary/status/<id>、/api/summary/ask、/api/summary/export）
-│                              #   + /api/llm/config；复用 jobs / threading / cleanup_worker
-├── summarizer.py              # [NEW] LLM 客户端（urllib + SSE）、字幕抓取与 SRT/VTT 解析、
+├── app.py                     # [DONE] 新增 6 条路由（页面 /summarize、/api/llm/config、
+│                              #   /api/llm/models、/api/summarize、/api/summary/status/<id>、
+│                              #   /api/summary/ask、/api/summary/export）；复用 jobs / threading / cleanup_worker
+├── summarizer.py              # [DONE] LLM 客户端（urllib + SSE）、字幕抓取与 SRT/VTT 解析、
 │                              #   整篇/分块总结、结构化结果校验、Markdown/DOCX 导出、Whisper 预留接口
-├── requirements.txt           # [MODIFY] 追加 python-docx>=1.2,<2
+├── requirements.txt           # [DONE] 追加 python-docx>=1.2,<2
 ├── templates/
-│   ├── index.html             # [MODIFY] 导航 .nav__links / .mobile-menu / 页脚追加「AI 总结」入口
-│   └── summarize.html         # [NEW] 总结页
+│   ├── index.html             # [DONE] 导航 .nav__links / .mobile-menu / 页脚追加「AI 总结」入口
+│   └── summarize.html         # [DONE] 总结页（含导图工具栏与画布容器）
 ├── static/
-│   ├── css/style.css          # [MODIFY] 追加总结页样式、思维导图连线、@media print 打印样式
-│   ├── js/summary.js          # [NEW] 提交、进度轮询、四段渲染、SVG 导图（布局/缩放/折叠）、SSE 追问、导出
-│   └── js/app.js              # [MODIFY] 视频卡片追加「去总结」跳转按钮（最小改动）
-├── llm_config.example.bat     # [NEW] 环境变量配置示例：set LLM_* 后调用 run.bat
-├── README.md                  # [MODIFY] 新增「AI 视频总结」章节
-└── docs/AI视频总结-设计文档.md  # [NEW] 本文档
+│   ├── css/style.css          # [DONE] 总结页样式、思维导图连线、@media print 打印样式
+│   ├── js/summary.js          # [DONE] 提交、进度轮询、四段渲染、SVG 导图（布局/缩放/折叠）、SSE 追问、导出
+│   └── js/app.js              # [DONE] 视频卡片追加「去总结」跳转按钮（最小改动）
+├── llm_config.example.bat     # [DONE] 环境变量配置示例：set LLM_* 后调用 run.bat
+├── README.md                  # [DONE] 新增「AI 视频总结」章节
+└── docs/AI视频总结-设计文档.md  # [DONE] 本文档
 ```
 
 ---
 
 ## 十、开发任务拆分
 
-| # | 任务 | 交付物 |
-|---|---|---|
-| 1 | 新建 `summarizer.py`：字幕抓取、SRT/VTT 解析去重、LLM 客户端（urllib + SSE）、整篇/分块总结与提示词 | 模块 + 单元自测 |
-| 2 | `app.py` 新增 5 条总结路由 + `/api/llm/config`，复用 jobs 与后台线程模型 | 接口可用 |
-| 3 | 新建 `templates/summarize.html` + `static/js/summary.js`：输入、流水线进度、四段结果、导图、SSE 追问、导出 | 页面可用 |
-| 4 | `style.css` 追加总结页样式与 `@media print` 打印样式 | 视觉一致 |
-| 5 | 入口接入（`index.html` 导航、卡片按钮）与文档（`requirements.txt`、`README.md`、`llm_config.example.bat`） | 一体化 |
-| 6 | 冒烟验证：接口、追问、导出、桌面与移动端截图 | 验证报告 |
+> 状态：**全部已完成（2026-10-10，随提交 71bde4b 上线 origin/main）**。
+
+| # | 任务 | 交付物 | 状态 |
+|---|---|---|---|
+| 1 | 新建 `summarizer.py`：字幕抓取、SRT/VTT 解析去重、LLM 客户端（urllib + SSE）、整篇/分块总结与提示词 | 模块 + 单元自测 | ✅ |
+| 2 | `app.py` 新增 6 条总结路由（`/api/llm/config`、`/api/llm/models`、`/api/summarize`、`/api/summary/status`、SSE `/api/summary/ask`、`/api/summary/export`），复用 jobs 与后台线程模型 | 接口可用 | ✅ |
+| 3 | 新建 `templates/summarize.html` + `static/js/summary.js`：输入、流水线进度、四段结果、ProcessOn 风格 SVG 导图、SSE 追问、导出 | 页面可用 | ✅ |
+| 4 | `style.css` 追加总结页样式与 `@media print` 打印样式 | 视觉一致 | ✅ |
+| 5 | 入口接入（`index.html` 导航、卡片按钮）与文档（`requirements.txt`、`README.md`、`llm_config.example.bat`） | 一体化 | ✅ |
+| 6 | 冒烟验证：接口、追问、导出、桌面与移动端 | 验证通过 | ✅ |
+| 7 | 思维导图重构为 ProcessOn 风格横向曲线图（SVG 自绘 + 工具栏） | 视觉升级 | ✅ |
 
 ---
 
@@ -317,6 +340,38 @@ d:/ai/hj-video-downloader/
 | 批量总结 | 不做 | 复用现有批量下载线程模型 |
 | 历史留存 | 纯内存，随 job 过期 | 本地 SQLite + 历史列表页 |
 | 长视频并发 | 单任务串行 | 分块并发 map（已预留 `SUMMARY_MAX_CONCURRENCY`） |
+
+---
+
+## 十三、代码模块地图（改动 / 扩展速查）
+
+### summarizer.py 函数职责
+| 函数 | 职责 | 常见改动场景 |
+|---|---|---|
+| `fetch_meta(url)` | yt-dlp `-j` 取标题/时长/封面/作者 | 想多抓字段 |
+| `fetch_subtitle(url)` | 抓字幕：先中文轨再 `all`，失败抛 `SummaryError` | 调整语言策略 |
+| `_no_subtitle_reason(log)` | yt-dlp 报错分类为「需登录 / 人机校验 / 网络 / 真无字幕」 | 新增平台报错匹配 |
+| `parse_subtitle` / `normalize_cues` | SRT/VTT 解析 + 去重 + 短句合并 | 解析质量调优 |
+| `cues_to_transcript(cues)` | 时间轴 → `[mm:ss] 文本` 送模型文本 | 改提示词输入格式 |
+| `chat` / `chat_stream` / `list_models` | OpenAI 兼容客户端（urllib，SSE） | 换网关 / 加模型能力 |
+| `build_summary_messages` / `build_map_messages` / `build_reduce_messages` | 提示词 | 调总结质量 |
+| `summarize(...)` | 整篇优先，超长退化为分块 map-reduce | 改总结策略 |
+| `normalize_result(data)` | 模型输出 → 前端契约（缺字段补默认） | 改输出结构 |
+| `to_markdown` / `to_docx` | 导出 | 改导出样式 |
+| `run_summary(job, url)` | 流水线（抓→解析→总结），改写 job 字典 | 加阶段 / 埋点 |
+| `whisper_fallback(url)` | **二期预留**：无字幕 → 本地语音转写 | 接 faster-whisper |
+
+### app.py 路由（文件末尾「AI 视频总结」段）
+- 页面：`/summarize`
+- 配置：`/api/llm/config`、`/api/llm/models`
+- 任务：`/api/summarize`、`/api/summary/status/<id>`、`/api/summary/ask`(SSE)、`/api/summary/export`
+- 注入点（避免循环导入）：`summarizer.configure(ytdlp=..., cookie_args=..., child_env=...)` 在 `app.py` 启动时调用
+
+### 前端（templates/summarize.html + static/js/summary.js + static/css/style.css）
+- 输入/进度/四段渲染/导出：`submitSummary` → `pollStatus` → `renderResult`（含 `renderTimeline` / `renderKeypoints` / `renderMindmap`）
+- 追问 SSE：`askFlow` → `pollAsk`（解析 `{"delta"}` / `{"done"}` / `{"error"}`）
+- 导图：`parseMindmap` → `renderMindmap`（SVG）→ `mmSetup`（工具栏 + 拖拽 + 折叠）
+- 样式：`.mindmap` / `.mm-*` / `@media print` 集中在 `style.css`
 
 ---
 
