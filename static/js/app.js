@@ -245,7 +245,8 @@ function cardHtml(c, idx) {
   if (isAudio) {
     thumb = `<div class="video-card__thumb-fallback" style="color:var(--brand)">${ICON.audio}</div>`;
   } else if (c.thumbnail) {
-    thumb = `<img src="${esc(c.thumbnail)}" alt="" onerror="this.style.display='none'">`;
+    // referrerpolicy：B站等 CDN 有防盗链，带本站 Referer 会 403
+    thumb = `<img src="${esc(c.thumbnail)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
   } else {
     thumb = `<div class="video-card__thumb-fallback">${ICON.video}</div>`;
   }

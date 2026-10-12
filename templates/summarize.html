@@ -130,82 +130,144 @@ call run.bat</pre>
   <section class="section" id="result" hidden>
     <div class="container">
 
-      <!-- 视频信息 + 导出 -->
-      <div class="sum-meta">
-        <img class="sum-meta__cover" id="metaCover" alt="" hidden>
-        <div class="sum-meta__body">
-          <h2 class="sum-meta__title" id="metaTitle"></h2>
-          <p class="sum-meta__sub" id="metaSub"></p>
-          <a class="btn btn--ghost btn--sm no-print" id="metaLink" href="#" target="_blank" rel="noopener">打开原视频</a>
-        </div>
-        <div class="sum-export no-print" id="exportBar">
-          <button class="btn btn--ghost btn--sm" id="copyBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
-            复制
-          </button>
-          <button class="btn btn--ghost btn--sm" id="mdBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
-            Markdown
-          </button>
-          <button class="btn btn--ghost btn--sm" id="docxBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
-            Word
-          </button>
-          <button class="btn btn--primary btn--sm" id="pdfBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h9l4 4v14H6z"/><path d="M6 15h12"/></svg>
-            PDF
-          </button>
-        </div>
-      </div>
+      <div class="sum-layout">
 
-      <!-- 一句话总览 -->
-      <div class="sum-card sum-card--overview">
-        <div class="sum-card__label">一句话总览</div>
-        <p class="sum-overview" id="overview"></p>
-      </div>
+        <!-- ============ 左栏：视频信息 + 下载 + 导出 ============ -->
+        <aside class="sum-aside">
 
-      <!-- 三段 Tab -->
-      <div class="sum-tabs no-print" role="tablist" aria-label="总结视图">
-        <button class="sum-tab is-active" role="tab" aria-selected="true" data-tab="chapters">章节大纲</button>
-        <button class="sum-tab" role="tab" aria-selected="false" data-tab="keypoints">核心要点</button>
-        <button class="sum-tab" role="tab" aria-selected="false" data-tab="mindmap">思维导图</button>
-      </div>
-
-      <div class="sum-panel is-active" id="panel-chapters" role="tabpanel">
-        <ol class="timeline" id="timeline"></ol>
-      </div>
-
-      <div class="sum-panel" id="panel-keypoints" role="tabpanel">
-        <div class="kp-grid" id="keypoints"></div>
-      </div>
-
-      <div class="sum-panel" id="panel-mindmap" role="tabpanel">
-        <div class="mindmap">
-          <div class="mm-toolbar no-print">
-            <button class="mm-tool" type="button" data-mm="out" title="缩小" aria-label="缩小">&minus;</button>
-            <span class="mm-zoom" id="mmZoom">100%</span>
-            <button class="mm-tool" type="button" data-mm="in" title="放大" aria-label="放大">&#65291;</button>
-            <span class="mm-sep" aria-hidden="true"></span>
-            <button class="mm-tool" type="button" data-mm="fit" title="适应画布">适应</button>
-            <button class="mm-tool" type="button" data-mm="reset" title="实际大小">1:1</button>
-            <span class="mm-hint">拖拽平移 · 滚轮缩放 · 点击节点折叠</span>
+          <div class="sum-vcard">
+            <div class="sum-vcard__cover">
+              <!-- referrerpolicy：B站等 CDN 有防盗链，带本站 Referer 会 403，必须去掉 -->
+              <img id="metaCover" alt="" hidden referrerpolicy="no-referrer" loading="lazy">
+              <div class="sum-vcard__ph" id="metaCoverPh">🎬</div>
+            </div>
+            <h2 class="sum-vcard__title" id="metaTitle"></h2>
+            <p class="sum-vcard__sub" id="metaSub"></p>
+            <a class="btn btn--ghost btn--sm btn--block no-print" id="metaLink" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
+              打开原视频
+            </a>
           </div>
-          <div class="mm-canvas" id="mindmap"></div>
-        </div>
-      </div>
 
-      <!-- 追问 -->
-      <div class="sum-card sum-ask no-print">
-        <div class="sum-card__label">继续追问</div>
-        <div class="ask-log" id="askLog"></div>
-        <div class="ask-chips" id="askChips">
-          <button class="chip chip--btn" data-q="这个视频的核心结论是什么？">核心结论是什么？</button>
-          <button class="chip chip--btn" data-q="给我三条可以立刻执行的行动建议">三条行动建议</button>
-          <button class="chip chip--btn" data-q="有哪些关键概念需要我重点理解？">关键概念有哪些？</button>
-        </div>
-        <div class="ask-input">
-          <input class="ask-input__field" id="askField" type="text" placeholder="就这个视频继续提问…" aria-label="提问">
-          <button class="btn btn--primary btn--sm" id="askBtn">提问</button>
+          <div class="sum-side no-print">
+            <div class="sum-side__label">下载视频</div>
+            <div class="seg" id="dlKind" role="group" aria-label="下载格式">
+              <button class="seg__btn is-active" type="button" data-kind="video">MP4</button>
+              <button class="seg__btn" type="button" data-kind="audio">MP3</button>
+            </div>
+            <select class="dl-select" id="dlQuality" aria-label="清晰度">
+              <option value="">加载清晰度…</option>
+            </select>
+            <button class="btn btn--primary btn--block" id="dlBtn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+              <span id="dlBtnText">下载视频</span>
+            </button>
+            <p class="dl-hint" id="dlHint" hidden></p>
+          </div>
+
+          <div class="sum-side sum-export no-print" id="exportBar">
+            <div class="sum-side__label">导出总结</div>
+            <button class="btn btn--ghost btn--sm btn--block" id="copyBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+              复制全文
+            </button>
+            <button class="btn btn--ghost btn--sm btn--block" id="mdBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+              Markdown
+            </button>
+            <button class="btn btn--ghost btn--sm btn--block" id="docxBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+              Word
+            </button>
+            <button class="btn btn--primary btn--sm btn--block" id="pdfBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h9l4 4v14H6z"/><path d="M6 15h12"/></svg>
+              PDF
+            </button>
+          </div>
+        </aside>
+
+        <!-- ============ 右栏：总结内容 ============ -->
+        <div class="sum-main">
+
+          <!-- 一句话总览 -->
+          <div class="sum-card sum-card--overview">
+            <div class="sum-card__label">一句话总览</div>
+            <p class="sum-overview" id="overview"></p>
+          </div>
+
+          <!-- 五段 Tab -->
+          <div class="sum-tabs no-print" role="tablist" aria-label="总结视图">
+            <button class="sum-tab is-active" role="tab" aria-selected="true" data-tab="summary">总结摘要</button>
+            <button class="sum-tab" role="tab" aria-selected="false" data-tab="chapters">章节大纲</button>
+            <button class="sum-tab" role="tab" aria-selected="false" data-tab="keypoints">亮点</button>
+            <button class="sum-tab" role="tab" aria-selected="false" data-tab="mindmap">思维导图</button>
+            <button class="sum-tab" role="tab" aria-selected="false" data-tab="subtitles">字幕文本</button>
+          </div>
+
+          <div class="sum-panel is-active" id="panel-summary" role="tabpanel">
+            <div class="sum-prose" id="summaryText"></div>
+          </div>
+
+          <div class="sum-panel" id="panel-chapters" role="tabpanel">
+            <ol class="timeline" id="timeline"></ol>
+          </div>
+
+          <div class="sum-panel" id="panel-keypoints" role="tabpanel">
+            <div class="kp-grid" id="keypoints"></div>
+          </div>
+
+          <div class="sum-panel" id="panel-mindmap" role="tabpanel">
+            <div class="mindmap" id="mmHost">
+              <div class="mm-toolbar no-print">
+                <button class="mm-tool" type="button" data-mm="out" title="缩小" aria-label="缩小">&minus;</button>
+                <span class="mm-zoom" id="mmZoom">100%</span>
+                <button class="mm-tool" type="button" data-mm="in" title="放大" aria-label="放大">&#65291;</button>
+                <span class="mm-sep" aria-hidden="true"></span>
+                <button class="mm-tool" type="button" data-mm="fit" title="适应画布">适应</button>
+                <button class="mm-tool" type="button" data-mm="reset" title="实际大小">1:1</button>
+                <span class="mm-sep" aria-hidden="true"></span>
+                <button class="mm-tool mm-tool--accent" type="button" data-mm="full" title="全屏阅读" id="mmFullBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                  全屏
+                </button>
+                <button class="mm-tool" type="button" data-mm="png" title="下载高清 PNG（2 倍采样）">PNG</button>
+                <button class="mm-tool" type="button" data-mm="svg" title="下载矢量 SVG（可无损缩放）">SVG</button>
+                <span class="mm-hint">拖拽平移 · 滚轮缩放 · 点击节点折叠</span>
+              </div>
+              <div class="mm-canvas" id="mindmap"></div>
+            </div>
+          </div>
+
+          <div class="sum-panel" id="panel-subtitles" role="tabpanel">
+            <div class="sub-bar no-print">
+              <span class="sub-count" id="subCount"></span>
+              <button class="btn btn--ghost btn--sm" id="subTxtBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+                下载 TXT
+              </button>
+              <button class="btn btn--ghost btn--sm" id="subSrtBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+                下载 SRT
+              </button>
+            </div>
+            <div class="sub-list" id="subtitleList"></div>
+          </div>
+
+          <!-- 追问 -->
+          <div class="sum-card sum-ask no-print">
+            <div class="sum-card__label">继续追问</div>
+            <div class="ask-log" id="askLog"></div>
+            <div class="ask-chips" id="askChips">
+              <button class="chip chip--btn" data-q="这个视频的核心结论是什么？">核心结论是什么？</button>
+              <button class="chip chip--btn" data-q="给我三条可以立刻执行的行动建议">三条行动建议</button>
+              <button class="chip chip--btn" data-q="有哪些关键概念需要我重点理解？">关键概念有哪些？</button>
+            </div>
+            <div class="ask-input">
+              <input class="ask-input__field" id="askField" type="text" placeholder="就这个视频继续提问…" aria-label="提问">
+              <button class="btn btn--primary btn--sm" id="askBtn">提问</button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

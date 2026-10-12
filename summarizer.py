@@ -5,10 +5,12 @@
 把 yt-dlp 相关工具函数注入进来，避免循环导入。
 """
 
+import http.client
 import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -40,6 +42,9 @@ LLM_MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", 8192))
 SUMMARY_CHUNK_CHARS = int(os.environ.get("SUMMARY_CHUNK_CHARS", 60000))
 SUMMARY_MAX_CONCURRENCY = int(os.environ.get("SUMMARY_MAX_CONCURRENCY", 3))
 ASK_CONTEXT_CHARS = int(os.environ.get("ASK_CONTEXT_CHARS", 60000))
+# 网关偶发中途断连（RemoteDisconnected）时的自动重试：次数 + 退避基数（秒）
+LLM_RETRY_ATTEMPTS = int(os.environ.get("LLM_RETRY_ATTEMPTS", 3))
+LLM_RETRY_DELAY = float(os.environ.get("LLM_RETRY_DELAY", 2.0))
 
 SUB_LANGS = os.environ.get("SUB_LANGS", "zh-Hans,zh-CN,zh,zh-TW,en.*")
 COOKIE_FILE = os.environ.get("COOKIE_FILE") or os.path.join(BASE_DIR, "cookies.txt")
@@ -133,7 +138,8 @@ def content_disposition(filename):
     from urllib.parse import quote
 
     ascii_name = re.sub(r"[^\x20-\x7E]", "", filename).strip().replace('"', "")
-    if not ascii_name:
+    # 纯中文名过滤后可能只剩 ".srt"，需要保证 ASCII 回退名可读
+    if not ascii_name or ascii_name.startswith("."):
         ext = os.path.splitext(filename)[1] or ".md"
         ascii_name = "video-summary" + ext
     return f'attachment; filename="{ascii_name}"; filename*=UTF-8\'\'{quote(filename)}'
@@ -393,6 +399,45 @@ def cues_to_transcript(cues):
     return "\n".join(f"[{fmt_ts(c['start'])}] {c['text']}" for c in cues)
 
 
+def _srt_time(seconds):
+    """秒 -> SRT 时间格式 HH:MM:SS,mmm（毫秒分隔符是逗号，与 WebVTT 的点号不同）。"""
+    try:
+        total = max(0.0, float(seconds))
+    except (TypeError, ValueError):
+        total = 0.0
+    ms = int(round(total * 1000))
+    h, rem = divmod(ms, 3600 * 1000)
+    m, rem = divmod(rem, 60 * 1000)
+    s, ms_rem = divmod(rem, 1000)
+    return f"{h:02d}:{m:02d}:{s:02d},{ms_rem:03d}"
+
+
+def cues_to_srt(cues):
+    """时间轴 -> 标准 SRT 字幕（可导入播放器）。"""
+    blocks = []
+    for idx, cue in enumerate(cues or [], 1):
+        text = str(cue.get("text") or "").strip()
+        if not text:
+            continue
+        blocks.append(
+            f"{idx}\n"
+            f"{_srt_time(cue.get('start', 0))} --> {_srt_time(cue.get('end', 0))}\n"
+            f"{text}"
+        )
+    return "\n\n".join(blocks) + ("\n" if blocks else "")
+
+
+def cues_to_txt(cues):
+    """时间轴 -> 纯文本字幕（[mm:ss] 文本，便于速读）。"""
+    lines = []
+    for cue in cues or []:
+        text = str(cue.get("text") or "").strip()
+        if not text:
+            continue
+        lines.append(f"[{fmt_ts(cue.get('start', 0))}] {text}")
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
 # --------------------------------------------------------------------------
 # 大模型客户端（OpenAI 兼容 /chat/completions，标准库实现）
 # --------------------------------------------------------------------------
@@ -448,6 +493,41 @@ def _llm_error_summary(code, body):
     return f"大模型返回 HTTP {code}" + (f"：{brief}" if brief else "")
 
 
+# 网关偶发中断/限流对应的 HTTP 状态码，遇到这些也重试
+_TRANSIENT_HTTP = ("HTTP 408", "HTTP 425", "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504")
+
+
+def _is_transient(exc):
+    """判断是否属于「偶发、可重试」的调用失败。"""
+    if isinstance(exc, (http.client.RemoteDisconnected, http.client.IncompleteRead,
+                        ConnectionResetError, ConnectionAbortedError,
+                        BrokenPipeError, socket.timeout, TimeoutError)):
+        return True
+    if isinstance(exc, SummaryError):
+        return any(code in str(exc) for code in _TRANSIENT_HTTP)
+    return False
+
+
+def _as_summary_error(exc):
+    """把底层异常翻译成可读中文提示（不回显堆栈与密钥）。"""
+    if isinstance(exc, SummaryError):
+        return exc
+    if isinstance(exc, http.client.RemoteDisconnected):
+        return SummaryError(
+            "大模型网关中途断开连接（已自动重试仍失败）。输出较长时较易触发，"
+            "可稍后重试，或调小 LLM_MAX_TOKENS"
+        )
+    if isinstance(exc, http.client.IncompleteRead):
+        return SummaryError("大模型返回数据不完整（已自动重试仍失败），请稍后重试")
+    if isinstance(exc, (socket.timeout, TimeoutError)):
+        return SummaryError("大模型请求超时，可调大 LLM_TIMEOUT 或稍后重试")
+    if isinstance(exc, (ConnectionResetError, ConnectionAbortedError, BrokenPipeError)):
+        return SummaryError("与大模型服务的连接被中断（已自动重试仍失败），请稍后重试")
+    if isinstance(exc, urllib.error.URLError):
+        return SummaryError(f"无法连接大模型服务（{exc.reason}），请检查网络与 LLM_BASE_URL")
+    return SummaryError(f"大模型调用失败（{type(exc).__name__}），请稍后重试")
+
+
 def _chat_once(messages, json_mode, timeout, max_tokens):
     payload = {
         "model": LLM_MODEL,
@@ -458,9 +538,18 @@ def _chat_once(messages, json_mode, timeout, max_tokens):
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
 
-    with _llm_slots:
-        with _post(payload, timeout or LLM_TIMEOUT) as resp:
-            raw = resp.read().decode("utf-8", errors="replace")
+    attempts = max(1, LLM_RETRY_ATTEMPTS)
+    raw = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with _llm_slots:
+                with _post(payload, timeout or LLM_TIMEOUT) as resp:
+                    raw = resp.read().decode("utf-8", errors="replace")
+            break
+        except Exception as exc:                      # noqa: BLE001
+            if not _is_transient(exc) or attempt >= attempts:
+                raise _as_summary_error(exc)
+            time.sleep(LLM_RETRY_DELAY * attempt)     # 线性退避：2s / 4s …
 
     try:
         data = json.loads(raw)
@@ -574,6 +663,7 @@ SYSTEM_PROMPT = (
 JSON_SCHEMA_HINT = (
     "{\n"
     '  "overview": "一句话总览，不超过 60 字",\n'
+    '  "summary": "200-400 字段落式总结摘要，使用 Markdown 排版（关键概念用 **加粗**，可用 - 要点列表与 ### 小标题），讲清视频讲什么、怎么讲、结论是什么",\n'
     '  "chapters": [{"start": 0, "end": 320, "title": "章节标题", "points": ["要点1", "要点2"]}],\n'
     '  "keypoints": ["核心知识要点 1", "核心知识要点 2"],\n'
     '  "mindmap": "- 主题\\n  - 子主题\\n    - 叶子节点"\n'
@@ -583,10 +673,13 @@ JSON_SCHEMA_HINT = (
 SUMMARY_RULES = (
     "输出要求：\n"
     "1. 只输出一个 JSON 对象，不要输出解释、不要使用 Markdown 代码块以外的任何文字；\n"
-    "2. chapters 按 start 递增排列，覆盖整段视频，最多 12 章，start/end 为整数秒；\n"
-    "3. keypoints 为 3-10 条核心知识要点，每条不超过 60 字；\n"
-    "4. mindmap 使用 Markdown 缩进列表（- 开头，2 空格缩进一层），体现视频的知识结构；\n"
-    "5. 语言与字幕主体语言保持一致。"
+    "2. overview 是一句话（不超过 60 字）；summary 是 200-400 字的段落式摘要（可 2-4 段），"
+    "使用 Markdown 排版：关键概念用 **加粗**，要点可用 - 列表，需要分段时用 ### 小标题；"
+    "二者内容互补但不要重复措辞；\n"
+    "3. chapters 按 start 递增排列，覆盖整段视频，最多 12 章，start/end 为整数秒；\n"
+    "4. keypoints 为 3-10 条核心知识要点，每条不超过 60 字；\n"
+    "5. mindmap 使用 Markdown 缩进列表（- 开头，2 空格缩进一层），体现视频的知识结构；\n"
+    "6. 语言与字幕主体语言保持一致。"
 )
 
 
@@ -659,6 +752,7 @@ def summarize(title, duration, transcript, cues=None, progress=None):
         if progress:
             progress(value, note)
 
+    partial_failures = 0
     if cues and len(transcript) > SUMMARY_CHUNK_CHARS:
         report(55, "分段理解中")
         pieces = chunk_cues(cues, SUMMARY_CHUNK_CHARS)
@@ -669,8 +763,13 @@ def summarize(title, duration, transcript, cues=None, progress=None):
                 for piece in pieces
             ]
             for idx, future in enumerate(futures, 1):
-                notes.append(future.result())
+                try:
+                    notes.append(future.result())
+                except Exception:                     # 单块失败不拖垮整体，最后统一标注
+                    partial_failures += 1
                 report(55 + int(25 * idx / max(len(futures), 1)), f"分段理解中（{idx}/{len(futures)}）")
+        if not notes:
+            raise SummaryError("分段理解全部失败，请稍后重试（可能是网关繁忙）")
         report(85, "汇总大纲中")
         content = chat(build_reduce_messages(title, "\n".join(notes)), json_mode=True)
     else:
@@ -692,11 +791,14 @@ def summarize(title, duration, transcript, cues=None, progress=None):
     if result is None:
         return {
             "overview": (content or "")[:200],
+            "summary": "",
             "chapters": [],
             "keypoints": [],
             "mindmap": "",
             "degraded": True,
         }
+    if partial_failures:
+        result["partial"] = True                      # 前端据此提示「结果可能不完整」
     return result
 
 
@@ -756,8 +858,12 @@ def normalize_result(data):
     keypoints = [str(k).strip() for k in keypoints if str(k).strip()] \
         if isinstance(keypoints, list) else []
 
+    # 段落式总结摘要：模型漏输出时留空，由前端回退到 overview，绝不报错
+    summary = str(data.get("summary") or "").strip()
+
     return {
         "overview": str(data.get("overview") or "").strip(),
+        "summary": summary,
         "chapters": chapters,
         "keypoints": keypoints,
         "mindmap": str(data.get("mindmap") or "").strip(),
@@ -815,6 +921,13 @@ def to_markdown(result, meta=None):
     lines.append("")
     lines.append(result.get("overview") or "（无）")
 
+    summary = (result.get("summary") or "").strip()
+    if summary:
+        lines.append("")
+        lines.append("## 总结摘要")
+        lines.append("")
+        lines.append(summary)
+
     chapters = result.get("chapters") or []
     if chapters:
         lines.append("")
@@ -842,6 +955,71 @@ def to_markdown(result, meta=None):
     return "\n".join(lines)
 
 
+_MD_BOLD = re.compile(r"\*\*(.+?)\*\*")
+
+
+def summary_blocks(summary):
+    """把 Markdown 段落摘要切成结构化块，供 DOCX 排版。
+
+    返回 [{"type": "h2"|"h3"|"p"|"ul"|"ol", "text"/"items": ...}]，
+    只处理摘要需要的语法（小标题 / 列表 / 段落），不追求完整 Markdown 覆盖。
+    """
+    blocks = []
+    for raw in (summary or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+
+        heading = re.match(r"^(#{2,4})\s+(.+)$", line)
+        if heading:
+            blocks.append({
+                "type": "h2" if len(heading.group(1)) == 2 else "h3",
+                "text": heading.group(2).strip(),
+            })
+            continue
+
+        quote = re.match(r"^>\s?(.*)$", line)
+        if quote:
+            blocks.append({"type": "quote", "text": quote.group(1).strip()})
+            continue
+
+        bullet = re.match(r"^[-*+]\s+(.+)$", line)
+        if bullet:
+            item = bullet.group(1).strip()
+            if blocks and blocks[-1]["type"] == "ul":
+                blocks[-1]["items"].append(item)
+            else:
+                blocks.append({"type": "ul", "items": [item]})
+            continue
+
+        ordered = re.match(r"^\d+[.)]\s+(.+)$", line)
+        if ordered:
+            item = ordered.group(1).strip()
+            if blocks and blocks[-1]["type"] == "ol":
+                blocks[-1]["items"].append(item)
+            else:
+                blocks.append({"type": "ol", "items": [item]})
+            continue
+
+        blocks.append({"type": "p", "text": line})
+    return blocks
+
+
+def add_md_paragraph(document, text, style=None):
+    """写入一段文本，把 **加粗** 拆成粗体 run（DOCX 没有 Markdown 概念）。"""
+    paragraph = document.add_paragraph(style=style) if style else document.add_paragraph()
+    text = text or ""
+    pos = 0
+    for match in _MD_BOLD.finditer(text):
+        if match.start() > pos:
+            paragraph.add_run(text[pos:match.start()])
+        paragraph.add_run(match.group(1)).bold = True
+        pos = match.end()
+    if pos < len(text):
+        paragraph.add_run(text[pos:])
+    return paragraph
+
+
 def to_docx(result, meta=None, out_path=None):
     """Markdown -> DOCX（python-docx）。返回文件路径。"""
     try:
@@ -866,6 +1044,25 @@ def to_docx(result, meta=None, out_path=None):
 
     document.add_heading("一句话总览", level=1)
     document.add_paragraph(result.get("overview") or "（无）")
+
+    summary = (result.get("summary") or "").strip()
+    if summary:
+        document.add_heading("总结摘要", level=1)
+        for block in summary_blocks(summary):
+            if block["type"] == "h2":
+                document.add_heading(block["text"], level=2)
+            elif block["type"] == "h3":
+                document.add_heading(block["text"], level=3)
+            elif block["type"] == "quote":
+                add_md_paragraph(document, block["text"], style="Quote")
+            elif block["type"] == "ul":
+                for item in block["items"]:
+                    add_md_paragraph(document, item, style="List Bullet")
+            elif block["type"] == "ol":
+                for item in block["items"]:
+                    add_md_paragraph(document, item, style="List Number")
+            else:
+                add_md_paragraph(document, block["text"])
 
     chapters = result.get("chapters") or []
     if chapters:

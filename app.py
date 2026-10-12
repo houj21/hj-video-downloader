@@ -579,6 +579,47 @@ def summary_export():
     )
 
 
+@app.route("/api/summary/subtitle/<job_id>")
+def summary_subtitle(job_id):
+    """字幕文本 Tab 的数据源：懒加载时间轴，避免把上千条字幕塞进 status 轮询。"""
+    job = jobs.get(job_id)
+    if not job or job.get("kind") != "summary":
+        return jsonify({"error": "任务不存在或已过期，请重新总结"}), 404
+    cues = job.get("cues") or []
+    return jsonify({
+        "cues": [{
+            "start": c.get("start", 0),
+            "end": c.get("end", 0),
+            "text": c.get("text", ""),
+        } for c in cues],
+    })
+
+
+@app.route("/api/summary/subtitle", methods=["POST"])
+def summary_subtitle_download():
+    """字幕下载：txt（速读）/ srt（带时间轴，可导入播放器）。"""
+    data = request.json or {}
+    job = jobs.get((data.get("job_id") or "").strip())
+    if not job or job.get("kind") != "summary":
+        return jsonify({"error": "任务不存在或已过期，请重新总结"}), 404
+
+    cues = job.get("cues") or []
+    if not cues:
+        return jsonify({"error": "该视频暂无可用字幕"}), 400
+
+    fmt = (data.get("format") or "txt").strip().lower()
+    if fmt not in ("txt", "srt"):
+        return jsonify({"error": "不支持的字幕格式"}), 400
+
+    body = summarizer.cues_to_srt(cues) if fmt == "srt" else summarizer.cues_to_txt(cues)
+    base = summarizer.safe_filename((job.get("meta") or {}).get("title") or "视频字幕")
+    return Response(
+        body.encode("utf-8"),
+        mimetype="text/plain; charset=utf-8",
+        headers={"Content-Disposition": summarizer.content_disposition(f"{base}字幕.{fmt}")},
+    )
+
+
 def update_ytdlp():
     """Keep extractors fresh; silently skip when offline (or SKIP_YTDLP_UPDATE=1)."""
     if os.environ.get("SKIP_YTDLP_UPDATE") == "1":

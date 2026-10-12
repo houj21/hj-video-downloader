@@ -7,6 +7,8 @@
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
 
+  const HL_EMOJI = ['💡', '🔥', '✨', '🎯', '🚀', '📌', '🔑', '⚡', '🧠', '🏆'];
+
   const ICON = {
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16.2" x2="12" y2="16.2"/></svg>',
@@ -31,6 +33,10 @@
     meta: null,
     history: [],
     asking: false,
+    cues: [],            // 字幕时间轴（切到「字幕文本」Tab 时懒加载）
+    subLoaded: false,
+    formats: [],         // 左栏下载的清晰度列表
+    dlKind: 'video',
   };
 
   const STAGE_ORDER = ['fetching', 'parsing', 'summarizing', 'done'];
@@ -92,13 +98,16 @@
     $('#metaSub').textContent = bits.join(' · ');
 
     const cover = $('#metaCover');
+    const ph = $('#metaCoverPh');
     if (meta.thumbnail) {
       cover.src = meta.thumbnail;
       cover.alt = meta.title || '视频封面';
       cover.hidden = false;
-      cover.onerror = () => { cover.hidden = true; };
+      if (ph) ph.style.display = 'none';
+      cover.onerror = () => { cover.hidden = true; if (ph) ph.style.display = ''; };
     } else {
       cover.hidden = true;
+      if (ph) ph.style.display = '';
     }
 
     const link = $('#metaLink');
@@ -111,12 +120,18 @@
       $('#overview').textContent = '模型未返回结构化结果，以下是原始输出：' + (result.overview || '');
     }
 
+    renderSummary(result.summary);
     renderTimeline(result.chapters || []);
     renderKeypoints(result.keypoints || []);
     renderMindmap(result.mindmap || '');
 
     $('#result').hidden = false;
     $('#result').classList.add('is-in');
+
+    // 左栏下载：结果出来后再拉清晰度，不阻塞总结渲染
+    state.subLoaded = false;
+    state.cues = [];
+    loadFormats();
   }
 
   function renderTimeline(chapters) {
@@ -156,12 +171,153 @@
       box.innerHTML = '<p class="timeline__empty">本次未生成核心要点。</p>';
       return;
     }
+    // 亮点：与「核心要点」同源，只在前端加语义 emoji，避免模型重复生成、省 token
     points.forEach((p, i) => {
       const div = document.createElement('div');
-      div.className = 'kp-card';
-      div.innerHTML = '<span class="kp-num">' + (i + 1) + '</span><p class="kp-text">' + esc(p) + '</p>';
+      div.className = 'kp-card kp-card--hl';
+      div.innerHTML =
+        '<span class="kp-num kp-num--hl">' + HL_EMOJI[i % HL_EMOJI.length] + '</span>' +
+        '<p class="kp-text">' + esc(p) + '</p>';
       box.appendChild(div);
     });
+  }
+
+  /* ---------- 总结摘要：轻量 Markdown 渲染（离线优先，不引外部库） ---------- */
+  function mdInline(text) {
+    return esc(text)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
+  }
+
+  function mdToHtml(text) {
+    const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+    const html = [];
+    let list = null;
+
+    const flush = () => {
+      if (!list) return;
+      html.push('<' + list.tag + '>' +
+        list.items.map((item) => '<li>' + mdInline(item) + '</li>').join('') +
+        '</' + list.tag + '>');
+      list = null;
+    };
+
+    lines.forEach((raw) => {
+      const line = raw.trim();
+      if (!line) { flush(); return; }
+
+      const heading = line.match(/^(#{2,4})\s+(.+)$/);
+      if (heading) {
+        flush();
+        const level = Math.min(4, heading[1].length);
+        html.push('<h' + level + '>' + mdInline(heading[2]) + '</h' + level + '>');
+        return;
+      }
+
+      const quote = line.match(/^>\s?(.*)$/);
+      if (quote) {
+        flush();
+        html.push('<blockquote>' + mdInline(quote[1]) + '</blockquote>');
+        return;
+      }
+
+      const bullet = line.match(/^[-*+]\s+(.+)$/);
+      if (bullet) {
+        if (!list || list.tag !== 'ul') { flush(); list = { tag: 'ul', items: [] }; }
+        list.items.push(bullet[1]);
+        return;
+      }
+
+      const ordered = line.match(/^\d+[.)]\s+(.+)$/);
+      if (ordered) {
+        if (!list || list.tag !== 'ol') { flush(); list = { tag: 'ol', items: [] }; }
+        list.items.push(ordered[1]);
+        return;
+      }
+
+      flush();
+      html.push('<p>' + mdInline(line) + '</p>');
+    });
+
+    flush();
+    return html.join('');
+  }
+
+  function renderSummary(text) {
+    const box = $('#summaryText');
+    if (!box) return;
+    const body = String(text || '').trim() || ((state.result && state.result.overview) || '');
+    if (!body.trim()) {
+      box.innerHTML = '<p class="timeline__empty">本次未生成总结摘要，可查看「一句话总览」或「章节大纲」。</p>';
+      return;
+    }
+    const warn = (state.result && state.result.partial)
+      ? '<p class="sum-warn">部分片段理解失败，本次摘要可能不完整，建议稍后重新总结。</p>'
+      : '';
+    box.innerHTML = warn + mdToHtml(body);
+  }
+
+  /* ---------- 字幕文本：懒加载 + 渲染 + 下载 ---------- */
+  async function loadSubtitles() {
+    if (state.subLoaded || !state.jobId) return;
+    state.subLoaded = true;
+    const box = $('#subtitleList');
+    box.innerHTML = '<p class="timeline__empty">字幕加载中…</p>';
+    try {
+      const res = await fetch('/api/summary/subtitle/' + state.jobId);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '字幕加载失败');
+      state.cues = data.cues || [];
+      renderSubtitles(state.cues);
+    } catch (err) {
+      state.subLoaded = false;                       // 失败允许切回来重试
+      box.innerHTML = '<p class="timeline__empty">' + esc(err.message || '字幕加载失败') + '</p>';
+    }
+  }
+
+  function renderSubtitles(cues) {
+    const box = $('#subtitleList');
+    const count = $('#subCount');
+    if (!box) return;
+    if (!cues.length) {
+      box.innerHTML = '<p class="timeline__empty">该视频暂无可用字幕。</p>';
+      if (count) count.textContent = '';
+      return;
+    }
+    if (count) count.textContent = '共 ' + cues.length + ' 条';
+    const frag = document.createDocumentFragment();
+    cues.forEach((cue) => {
+      const row = document.createElement('div');
+      row.className = 'sub-row';
+      row.innerHTML =
+        '<a class="sub-time" href="' + esc(jumpUrl(cue.start)) + '" target="_blank" rel="noopener" ' +
+        'title="跳转到原视频 ' + fmtTs(cue.start) + '">' + fmtTs(cue.start) + '</a>' +
+        '<span class="sub-text">' + esc(cue.text) + '</span>';
+      frag.appendChild(row);
+    });
+    box.innerHTML = '';
+    box.appendChild(frag);
+  }
+
+  async function downloadSubtitle(fmt) {
+    if (!state.jobId) { toast('请先完成一次总结', 'error'); return; }
+    try {
+      const res = await fetch('/api/summary/subtitle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: state.jobId, format: fmt }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || '字幕下载失败');
+      }
+      const blob = await res.blob();
+      downloadBlob(blob, baseName() + '字幕.' + fmt);
+      toast('已开始下载 .' + fmt, 'success');
+    } catch (err) {
+      toast(err.message || '字幕下载失败', 'error');
+    }
   }
 
   /* ---------- 思维导图：Markdown 缩进树 -> 横向曲线导图（ProcessOn 风格 SVG） ---------- */
@@ -170,7 +326,7 @@
   const MM_COLORS = ['#1777FF', '#16A394', '#7C5CFF', '#E08A00', '#E0537A', '#0EA5E9'];
 
   const MM = {
-    tree: null, host: null, svg: null, layer: null, bounds: null,
+    tree: null, host: null, svg: null, layer: null, bounds: null, nodes: null,
     scale: 1, tx: 0, ty: 0, touched: false, collapsed: new Set(), seq: 0, bound: false,
   };
 
@@ -409,6 +565,24 @@
     MM.host = host;
     MM.bound = true;
 
+    // 全屏能力检测：不支持的浏览器直接隐藏按钮，不报错
+    const shell = $('#mmHost');
+    if (shell) {
+      if (!shell.requestFullscreen) {
+        const fullBtn = $('#mmFullBtn');
+        if (fullBtn) fullBtn.hidden = true;
+      }
+      // requestFullscreen 必须在用户手势内调用，因此只在这里注册「状态变化」后的重算
+      document.addEventListener('fullscreenchange', () => {
+        if (!MM.svg) return;
+        shell.classList.toggle('is-full', document.fullscreenElement === shell);
+        requestAnimationFrame(() => {
+          mmResize();
+          mmFit();                                  // 全屏后按新尺寸重新适应
+        });
+      });
+    }
+
     host.addEventListener('wheel', (e) => {
       if (!MM.svg) return;
       e.preventDefault();
@@ -488,6 +662,9 @@
           mmApply();
           mmZoomLabel();
         }
+        if (act === 'full') mmToggleFullscreen();
+        if (act === 'png') mmExportPNG();
+        if (act === 'svg') mmExportSVG();
       });
     }
 
@@ -524,6 +701,7 @@
     if (!MM.tree) return;
     const layout = mmLayout(MM.tree);
     MM.bounds = layout.bounds;
+    MM.nodes = layout.nodes;                        // 导出 PNG 时按同一份布局重绘
 
     const svg = svgEl('svg', { xmlns: SVGNS, preserveAspectRatio: 'xMidYMid meet' });
     const defs = svgEl('defs');
@@ -561,6 +739,168 @@
     // 模型偶尔会输出多个顶层节点，统一挂到一个虚拟根上，保证是单根横向导图
     MM.tree = raw.length === 1 ? raw[0] : { id: 'mroot', label: '视频要点', children: raw };
     mmRender(true);
+  }
+
+  /* ---------- 导图全屏阅读 ---------- */
+  function mmToggleFullscreen() {
+    const shell = $('#mmHost');
+    if (!shell) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => { /* 用户按 Esc 退出，忽略 */ });
+      return;
+    }
+    if (!shell.requestFullscreen) { toast('当前浏览器不支持全屏阅读', 'error'); return; }
+    // 必须由用户点击（手势）触发，否则浏览器会拒绝
+    shell.requestFullscreen().catch(() => toast('进入全屏失败', 'error'));
+  }
+
+  /* ---------- 导图导出：2 倍采样高清 PNG ---------- */
+  function mmRoundRect(ctx, x, y, w, h, r) {
+    const rr = Math.max(0, Math.min(r, w / 2, h / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + w - rr, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+    ctx.lineTo(x + w, y + h - rr);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+    ctx.lineTo(x + rr, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+    ctx.lineTo(x, y + rr);
+    ctx.quadraticCurveTo(x, y, x + rr, y);
+    ctx.closePath();
+  }
+
+  function mmExportPNG() {
+    if (!MM.nodes || !MM.bounds) { toast('思维导图尚未生成', 'error'); return; }
+    const b = MM.bounds;
+    // 固定 2 倍采样；极端长图按 canvas 尺寸上限回退，避免导出空白
+    const maxSide = 16000;
+    let scale = 2;
+    if (Math.max(b.w, b.h) * scale > maxSide) {
+      scale = Math.max(1, maxSide / Math.max(b.w, b.h));
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(b.w * scale));
+    canvas.height = Math.max(1, Math.round(b.h * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, b.w, b.h);
+
+    // 连线（与 SVG 同一套贝塞尔参数）
+    MM.nodes.forEach((node) => {
+      if (!node.parent) return;
+      const sx = node.parent.x + node.parent.w;
+      const sy = node.parent.y;
+      const ex = node.x;
+      const ey = node.y;
+      const k = Math.max(18, (ex - sx) * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.bezierCurveTo(sx + k, sy, ex - k, ey, ex, ey);
+      ctx.strokeStyle = node.color;
+      ctx.globalAlpha = node.depth === 1 ? 0.85 : 0.55;
+      ctx.lineWidth = node.depth === 1 ? 2.4 : 1.7;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+
+    // 节点：形状、底色、文字与页面保持一致
+    MM.nodes.forEach((node) => {
+      const spec = node.spec;
+      const x = node.x;
+      const y = node.y - node.h / 2;
+      const w = node.w;
+      const h = node.h;
+      const radius = spec.shape === 'card' ? 12 : (spec.shape === 'pill' ? h / 2 : 8);
+
+      if (spec.shape === 'card') {
+        const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+        grad.addColorStop(0, '#3D8DFF');
+        grad.addColorStop(1, '#0E58D6');
+        mmRoundRect(ctx, x, y, w, h, radius);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      } else if (spec.shape === 'pill') {
+        mmRoundRect(ctx, x, y, w, h, radius);
+        ctx.fillStyle = '#EDF4FF';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(23, 119, 255, 0.24)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = spec.shape === 'card' ? '#FFFFFF'
+        : (spec.shape === 'pill' ? '#17457F' : '#3A4A60');
+      ctx.font = spec.weight + ' ' + spec.size + 'px ' + MM_FONT;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, x + w / 2, y + h / 2 + 0.5);
+    });
+
+    canvas.toBlob((blob) => {
+      if (!blob) { toast('PNG 生成失败', 'error'); return; }
+      downloadBlob(blob, baseName() + '-思维导图.png');
+      toast('已开始下载高清 PNG', 'success');
+    }, 'image/png');
+  }
+
+  /* ---------- 导图导出：矢量 SVG ---------- */
+  function mmInlineSvgStyles(root) {
+    // 页面上节点配色靠外部 CSS，序列化后离线打开会丢色，这里补成内联属性
+    root.querySelectorAll('.mmx-node').forEach((group) => {
+      const rect = group.querySelector('.mmx-bg');
+      const text = group.querySelector('.mmx-txt');
+      const isCard = group.classList.contains('mmx-card');
+      const isPill = group.classList.contains('mmx-pill');
+
+      if (rect) {
+        if (isCard) rect.setAttribute('fill', 'url(#mmRootGrad)');
+        else if (isPill) {
+          rect.setAttribute('fill', '#EDF4FF');
+          rect.setAttribute('stroke', 'rgba(23, 119, 255, 0.24)');
+          rect.setAttribute('stroke-width', '1');
+        } else rect.setAttribute('fill', 'none');
+      }
+      if (text) {
+        text.setAttribute('fill', isCard ? '#FFFFFF' : (isPill ? '#17457F' : '#3A4A60'));
+      }
+
+      const badge = group.querySelector('.mmx-badge');
+      if (badge) {
+        const circle = badge.querySelector('circle');
+        if (circle) {
+          circle.setAttribute('fill', '#FFFFFF');
+          circle.setAttribute('stroke', '#D6DEE9');
+          circle.setAttribute('stroke-width', '1');
+        }
+        const num = badge.querySelector('text');
+        if (num) num.setAttribute('fill', '#6B7280');
+      }
+    });
+  }
+
+  function mmExportSVG() {
+    if (!MM.svg || !MM.bounds) { toast('思维导图尚未生成', 'error'); return; }
+    const b = MM.bounds;
+    const clone = MM.svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+    clone.setAttribute('width', Math.round(b.w));
+    clone.setAttribute('height', Math.round(b.h));
+    clone.setAttribute('viewBox', b.x + ' ' + b.y + ' ' + b.w + ' ' + b.h);
+
+    const layer = clone.querySelector('g');
+    if (layer) layer.removeAttribute('transform');   // 导出完整图：去掉缩放平移
+    mmInlineSvgStyles(clone);
+
+    const source = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + source],
+      { type: 'image/svg+xml;charset=utf-8' });
+    downloadBlob(blob, baseName() + '-思维导图.svg');
+    toast('已开始下载矢量 SVG', 'success');
   }
 
   /* ---------- 提交与轮询 ---------- */
@@ -778,6 +1118,109 @@
     }
   }
 
+  /* ---------- 左栏下载（复用首页下载接口） ---------- */
+  function renderQualityOptions() {
+    const sel = $('#dlQuality');
+    if (!sel) return;
+    if (state.dlKind === 'audio') {
+      sel.innerHTML = '<option value="bestaudio">音频 · 最佳音质</option>';
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+    const list = state.formats.length ? state.formats : [{ id: 'best', label: '最佳画质' }];
+    sel.innerHTML = list
+      .map((f) => '<option value="' + esc(f.id) + '">' + esc(f.label) + '</option>')
+      .join('');
+  }
+
+  async function loadFormats() {
+    const sel = $('#dlQuality');
+    const url = state.url || (state.meta && state.meta.webpage_url);
+    if (!sel || !url) return;
+    sel.innerHTML = '<option value="">加载清晰度…</option>';
+    try {
+      const res = await fetch('/api/info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '清晰度获取失败');
+      state.formats = data.formats || [];
+      renderQualityOptions();
+    } catch (err) {
+      sel.innerHTML = '<option value="">清晰度获取失败</option>';
+    }
+  }
+
+  async function startDownload() {
+    const url = state.url || (state.meta && state.meta.webpage_url);
+    if (!url) { toast('缺少视频链接', 'error'); return; }
+
+    const btn = $('#dlBtn');
+    const hint = $('#dlHint');
+    const quality = $('#dlQuality');
+    btn.disabled = true;
+    hint.hidden = false;
+    hint.textContent = '正在提交下载任务…';
+
+    try {
+      const payload = { url: url };
+      if (state.dlKind === 'audio') payload.format = 'audio';
+      else {
+        payload.format = 'video';
+        const picked = quality && quality.value ? quality.value : '';
+        if (picked && picked !== 'best') payload.format_id = picked;
+      }
+      const res = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '下载失败');
+      hint.textContent = '下载中 0%';
+      watchDownload(data.job_id, btn, hint);
+    } catch (err) {
+      btn.disabled = false;
+      hint.textContent = err.message || '下载失败';
+      toast(err.message || '下载失败', 'error');
+    }
+  }
+
+  function watchDownload(jobId, btn, hint) {
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/status/' + jobId);
+        const data = await res.json();
+        if (data.status === 'done') {
+          clearInterval(timer);
+          hint.textContent = '下载完成，正在保存…';
+          const a = document.createElement('a');
+          a.href = '/api/file/' + jobId;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          btn.disabled = false;
+          hint.textContent = '已保存到下载目录';
+          toast('下载完成', 'success');
+        } else if (data.status === 'error') {
+          clearInterval(timer);
+          btn.disabled = false;
+          hint.textContent = data.error || '下载失败';
+          toast(data.error || '下载失败', 'error');
+        } else {
+          hint.textContent = '下载中 ' + Math.round(data.percent || 0) + '%';
+        }
+      } catch (e) {
+        clearInterval(timer);
+        btn.disabled = false;
+        hint.textContent = '下载状态查询失败';
+      }
+    }, 1200);
+  }
+
   /* ---------- 绑定 ---------- */
   function bind() {
     const burger = $('#burger');
@@ -795,6 +1238,7 @@
         document.querySelectorAll('.sum-panel').forEach((p) => {
           p.classList.toggle('is-active', p.id === 'panel-' + tab.dataset.tab);
         });
+        if (tab.dataset.tab === 'subtitles') loadSubtitles();   // 首次切到字幕 Tab 才拉取
       });
     });
 
@@ -804,6 +1248,23 @@
       const chip = e.target.closest('.chip--btn');
       if (chip) ask(chip.dataset.q);
     });
+
+    const seg = $('#dlKind');
+    if (seg) {
+      seg.addEventListener('click', (e) => {
+        const btn = e.target.closest('.seg__btn');
+        if (!btn) return;
+        state.dlKind = btn.dataset.kind;
+        seg.querySelectorAll('.seg__btn').forEach((b) => b.classList.toggle('is-active', b === btn));
+        const label = $('#dlBtnText');
+        if (label) label.textContent = state.dlKind === 'audio' ? '下载音频' : '下载视频';
+        renderQualityOptions();
+      });
+    }
+    $('#dlBtn').addEventListener('click', startDownload);
+
+    $('#subTxtBtn').addEventListener('click', () => downloadSubtitle('txt'));
+    $('#subSrtBtn').addEventListener('click', () => downloadSubtitle('srt'));
 
     $('#copyBtn').addEventListener('click', doCopy);
     $('#mdBtn').addEventListener('click', () => doDownload('md', 'md', 'text/markdown'));
