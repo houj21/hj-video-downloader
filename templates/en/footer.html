@@ -1,0 +1,26 @@
+<!-- ============ Footer (English, with platform internal links) ============ -->
+<footer class="footer">
+  <div class="container footer__inner">
+    <div>
+      <div class="footer__brand">HJ Video Downloader</div>
+      <p class="footer__note">
+        This project is an open-source, self-use oriented practice built on yt-dlp. Only download material you own
+        or have permission to save, follow each platform's terms and your local laws, avoid paid or copyrighted
+        content, and do not hammer the sites. You accept responsibility for how you use this tool.
+      </p>
+    </div>
+    <div class="footer__links">
+      <a href="/en">Download Video</a>
+      <a href="/en/summarize">AI Summary</a>
+      <a href="/en/pricing">Pricing</a>
+      <a href="/en/faq">FAQ</a>
+      <a href="/en/guides">Guides</a>
+    </div>
+  </div>
+  {% if footer_platforms %}
+  <div class="container footer__platforms">
+    <span class="footer__platforms-label">Download by platform</span>
+    {% for item in footer_platforms %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}</a>{% endfor %}
+  </div>
+  {% endif %}
+</footer>

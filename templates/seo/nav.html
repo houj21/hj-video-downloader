@@ -1,0 +1,40 @@
+<!-- ============ Navigation（与首页一致的结构，新增页面复用） ============ -->
+<header class="nav">
+  <div class="container nav__inner">
+    <a class="brand" href="/" title="HJ 视频下载 - 万能视频下载总结器">
+      <span class="brand__mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </span>
+      <span class="brand__name">HJ<span>视频下载</span></span>
+    </a>
+
+    <nav class="nav__links">
+      <a class="nav__link{% if nav_active == 'home' %} is-active{% endif %}" href="/">首页</a>
+      <a class="nav__link{% if nav_active == 'summarize' %} is-active{% endif %}" href="/summarize">AI 总结</a>
+      <a class="nav__link{% if nav_active == 'pricing' %} is-active{% endif %}" href="/pricing">定价</a>
+      <a class="nav__link{% if nav_active == 'faq' %} is-active{% endif %}" href="/faq">常见问题</a>
+      <a class="nav__link{% if nav_active == 'guides' %} is-active{% endif %}" href="/guides">使用指南</a>
+    </nav>
+
+    <a class="nav__cta" href="/">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
+      免费下载
+    </a>
+
+    <button class="nav__burger" id="burger" aria-label="打开菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">首页 · 视频下载</a>
+    <a href="/summarize">AI 视频总结</a>
+    <a href="/pricing">定价 · 会员权益</a>
+    <a href="/faq">常见问题</a>
+    <a href="/guides">使用指南</a>
+  </div>
+</header>

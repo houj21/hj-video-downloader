@@ -1,0 +1,67 @@
+{
+  "slug": "ai-video-summary-workflow",
+  "order": 3,
+  "title": "How to Summarize a One-Hour Video with AI | HJ Video Downloader",
+  "description": "Skip watching lectures, interviews and podcasts end to end: generate a one-line overview, timestamped chapters, key points and a mind map, then ask follow-up questions about the video. Includes cost, privacy and accuracy notes.",
+  "keywords": ["AI video summarizer", "summarize long video", "video to text summary", "lecture video notes", "timestamped chapters generator"],
+  "h1": "Summarizing a One-Hour Video with AI",
+  "sub": "It reads subtitles, not pixels — which is why it beats watching",
+  "date": "2026-10-15",
+  "toc": [
+    { "id": "why", "text": "Subtitles instead of frames" },
+    { "id": "steps", "text": "Three steps to usable notes" },
+    { "id": "chapters", "text": "Using timestamped chapters" },
+    { "id": "ask", "text": "Turning a video into a Q&A session" },
+    { "id": "export", "text": "Exporting and editing" },
+    { "id": "limits", "text": "Accuracy limits" }
+  ],
+  "sections": [
+    {
+      "id": "why",
+      "heading": "Subtitles instead of frames",
+      "paragraphs": [
+        "Understanding video frame by frame is expensive, yet nearly every video platform already ships a subtitle track. Grabbing subtitles and handing them to a model means a one-hour video takes three to ten seconds to process, with no video download at all.",
+        "That also sets the boundaries. Spoken-word content — lectures, interviews, talks, podcasts, explainer videos — works beautifully. Purely visual walkthroughs lose too much in translation."
+      ]
+    },
+    {
+      "id": "steps",
+      "heading": "Three steps to usable notes",
+      "paragraphs": [
+        "Open the AI summary page and paste the link. Chinese subtitles are preferred, other languages are used as a fallback, and videos with no subtitles report that clearly.",
+        "Watch the pipeline run: fetch subtitles, write the overview, split chapters, extract key points, build the map.",
+        "Read the one-line overview first and decide whether the video deserves your time. Only then go deeper — that judgment call is the real payoff."
+      ]
+    },
+    {
+      "id": "chapters",
+      "heading": "Using timestamped chapters",
+      "paragraphs": [
+        "Every chapter links back to its moment in the original video. The efficient habit is to scan the outline, jump to the two or three sections you care about, and skip the rest — an hour of content often takes ten minutes that way."
+      ]
+    },
+    {
+      "id": "ask",
+      "heading": "Turning a video into a Q&A session",
+      "paragraphs": [
+        "Once summarizing finishes you can keep asking questions; the model answers with the subtitle context attached and streams the reply. It is like having an assistant who has read just this one video."
+      ]
+    },
+    {
+      "id": "export",
+      "heading": "Exporting and editing",
+      "paragraphs": [
+        "Results export to Markdown, Word and PDF (print to PDF). Markdown drops straight into Notion or Obsidian; Word is convenient for reports and meeting minutes that need further edits."
+      ]
+    },
+    {
+      "id": "limits",
+      "heading": "Accuracy limits",
+      "paragraphs": [
+        "Output quality is capped by subtitle quality: auto-generated captions mishear proper nouns. Verify anything you intend to act on.",
+        "Costs are only LLM tokens — a one-hour transcript runs 10-20k characters, typically pennies. Subtitles and results stay in server memory and are dropped when the job expires."
+      ]
+    }
+  ],
+  "conclusion": "Try it with one link. If the video turns out to be worth keeping, go back and download the full file."
+}

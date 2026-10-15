@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = 'pricing' %}
+{% include 'en/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="Breadcrumb">
+      <a href="/en">HJ Video Downloader</a><span aria-hidden="true">›</span>
+      <span aria-current="page">Pricing</span>
+    </nav>
+    <h1 class="hero__title">Choose the plan that <em>fits you</em></h1>
+    <p class="hero__sub">Payments are not connected yet — this page outlines the planned tiers</p>
+  </div>
+</section>
+
+{% include 'seo/answer_block.html' %}
+
+<section class="section">
+  <div class="container">
+    <div class="plans">
+      <div class="plan">
+        <div class="plan__head">
+          <h2 class="plan__name">Free</h2>
+          <p class="plan__desc">Enough for occasional saving</p>
+        </div>
+        <div class="plan__price"><span class="plan__currency">¥</span><span class="plan__amount">0</span><span class="plan__period">/ day</span></div>
+        <ul class="plan__features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5 downloads per day</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>MP4 and MP3 output</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Quality selection</li>
+          <li class="is-off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>4K source quality</li>
+          <li class="is-off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Unlimited batch</li>
+        </ul>
+      </div>
+
+      <div class="plan plan--featured">
+        <span class="plan__badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>Pro</span>
+        <div class="plan__head">
+          <h2 class="plan__name">Pro</h2>
+          <p class="plan__desc">For people who save a lot</p>
+        </div>
+        <div class="plan__price"><span class="plan__currency">¥</span><span class="plan__amount">--</span><span class="plan__period">/ month</span></div>
+        <ul class="plan__features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>4K source quality</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited batch downloads</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI summaries and follow-up Q&amp;A</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Faster concurrent downloads</li>
+        </ul>
+      </div>
+
+      <div class="plan">
+        <div class="plan__head">
+          <h2 class="plan__name">Team</h2>
+          <p class="plan__desc">Shared use</p>
+        </div>
+        <div class="plan__price"><span class="plan__currency">¥</span><span class="plan__amount">--</span><span class="plan__period">/ month</span></div>
+        <ul class="plan__features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Everything in Pro</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Multiple seats</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Shared summary exports</li>
+        </ul>
+      </div>
+    </div>
+    <p class="plan__note">Payments are not enabled yet — the free tier covers parsing and downloading.</p>
+  </div>
+</section>
+
+{% include 'seo/answer_faq.html' %}
+
+{% include 'en/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "slug": "youtube",
+  "order": 2,
+  "name": "YouTube",
+  "alias": "油管 / yt",
+  "domains": ["youtube.com", "youtu.be"],
+  "path": "/youtube-video-download",
+  "title": "YouTube 视频下载 - 支持 MP4 / MP3 / 4K 解析 | HJ 视频下载",
+  "description": "YouTube 视频下载：粘贴链接自动解析全部分辨率，可选 MP4 最高 4K 或抽取 MP3 音轨，支持 Shorts、带 list 参数的播放列表与长视频，网页端直接操作。",
+  "keywords": ["YouTube视频下载", "youtube下载器", "油管视频下载", "YouTube转MP3", "YouTube 4K下载", "YouTube在线解析"],
+  "h1": "YouTube 视频下载",
+  "sub": "粘贴油管链接，选分辨率、导出 MP3，长视频与播放列表同样支持",
+  "intro": [
+    "YouTube 的在线解析难点在于：视频与音频是分别传输的多条流，最高画质往往没有合并好的单一文件。HJ 视频下载在服务端自动挑选最佳画面流与最佳音轨，合并后输出一个完整 MP4，省去你手动处理的步骤。",
+    "除了常规视频，Shorts 短视频、带 list 参数的播放列表、直播回放都可以处理。只想保留声音时切换到 MP3 模式，直接得到一份音频文件，适合保存音乐现场、播客与技术分享。"
+  ],
+  "caps": [
+    { "name": "最高 4K 分辨率", "desc": "自动列出 1440P、2160P（4K）等可用档位，按需挑选。" },
+    { "name": "音视频流合并", "desc": "自动合并最佳画面与最佳音轨，避免下完发现没有声音。" },
+    { "name": "MP3 音轨提取", "desc": "一键抽取音频输出 MP3，体积远小于原视频。" },
+    { "name": "播放列表", "desc": "带 list 参数的链接自动展开，批量下载后打包下载。" }
+  ],
+  "notes": [
+    "YouTube 常出现 Sign in to confirm you're not a bot 的机器人校验，建议配置 Cookie 提升成功率。",
+    "受地区限制或会员专享的内容需要对应地区的访问权限，请参考合规性约定后再操作。",
+    "长视频建议先用本站 AI 视频总结判断内容价值，再决定是否完整下载。"
+  ],
+  "faq": [
+    { "q": "可以只下载音频吗？", "a": "可以。把格式开关切到「MP3 音频」，再点下载，程序会直接抽取音轨输出 MP3 文件。" },
+    { "q": "下载下来为什么没有声音？", "a": "高清视频的音视频是分开的两条流，合并依赖 ffmpeg。请确认 ffmpeg 已安装并在 PATH 中，合并失败时会退化为单流。" },
+    { "q": "Shorts 短视频支持吗？", "a": "支持。Shorts 链接与普通视频链接使用相同的解析流程，粘贴后即可看到可选清晰度。" },
+    { "q": "提示「Sign in to confirm you're not a bot」怎么办？", "a": "这是 YouTube 的反爬校验。在服务端放置 Netscape 格式的 Cookie 文件（默认 cookies.txt）后重试，成功率会明显提升。" }
+  ],
+  "related": ["bilibili", "twitch", "instagram"]
+}

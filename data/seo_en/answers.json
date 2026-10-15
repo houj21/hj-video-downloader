@@ -1,0 +1,249 @@
+{
+  "/": {
+    "heading": "HJ Video Downloader at a Glance",
+    "tldr": "HJ Video Downloader is a browser-based tool: paste a video link to parse and download it as MP4 (with quality selection) or MP3, batch multiple links into a zip, and generate an AI summary with timestamped chapters and key points. Nothing to install, works in mobile browsers.",
+    "points": [
+      "Paste a link to start — no sign-up and nothing to install",
+      "1000+ sites: YouTube, Bilibili, Douyin, Kuaishou, Weibo, Xiaohongshu, Twitter/X, Instagram and more",
+      "Two outputs: MP4 video (choose quality) and MP3 audio",
+      "Batch: multiple links and playlists expand and zip together",
+      "AI summary: overview, chapters, key points, mind map, follow-up Q&A",
+      "Privacy: no database, files cleared about 30 minutes later"
+    ],
+    "facts": [
+      ["Supported sites", "1000+ (powered by yt-dlp)"],
+      ["Output formats", "MP4 video / MP3 audio"],
+      ["Quality", "Whatever the source offers, up to 4K"],
+      ["Batching", "Multi-link and playlists, zipped automatically"],
+      ["Requirements", "A browser — no sign-up, no install"],
+      ["File retention", "Temporary on the server, ~30 minutes"],
+      ["Price", "Payments not enabled yet; free tier available"]
+    ],
+    "faq": [
+      { "q": "How do I use HJ Video Downloader?", "a": "Open the home page, paste a video link, press Parse, choose MP4 or MP3 plus a quality, then Download and Save to device when it finishes. Separate several links with spaces for batch downloads." },
+      { "q": "Which platforms are supported?", "a": "Everything yt-dlp covers — 1000+ sites, including YouTube, Bilibili, Douyin, Kuaishou, Weibo, Xiaohongshu, Twitter/X, Instagram, TikTok, Vimeo, Twitch and SoundCloud." },
+      { "q": "Does it cost anything?", "a": "Payments are not enabled yet. The free tier covers parsing and downloading; the pricing page only shows planned benefits." },
+      { "q": "Can it summarize videos with no subtitles?", "a": "No. The current version requires subtitles and says so clearly; speech-to-text is planned for a later release." }
+    ]
+  },
+  "/summarize": {
+    "heading": "AI Summaries at a Glance",
+    "tldr": "AI summaries do not download video or analyse frames. They read the subtitle track and have a model write a one-line overview, timestamped chapters, key points and a mind map, then answer follow-up questions. Typically 3-10 seconds, no video download involved.",
+    "points": [
+      "Reads subtitles only — usually done in 3-10 seconds",
+      "Four outputs: overview, chapters, key points, mind map",
+      "Timestamps link back to the exact moment in the video",
+      "Follow-up Q&A grounded in that video, streamed live",
+      "Export to Markdown, Word and PDF",
+      "Costs only LLM tokens — pennies per hour of video"
+    ],
+    "facts": [
+      ["Input", "A video link that has usable subtitles"],
+      ["Output", "Overview / chapters / key points / mind map"],
+      ["Speed", "Usually 3-10 seconds"],
+      ["Export", "Markdown, Word (docx), PDF"],
+      ["Follow-up", "Supported, streamed with subtitle context"],
+      ["Limits", "Subtitles required for now"],
+      ["Cost", "LLM tokens only; ~10-20k characters per hour"]
+    ],
+    "faq": [
+      { "q": "What kind of video summarizes well?", "a": "Spoken-word content: lectures, interviews, talks, podcasts and explainers. Purely visual walkthroughs lose too much." },
+      { "q": "How accurate is it?", "a": "Accuracy is capped by subtitle quality. Auto-generated captions mishear proper nouns, so verify anything you plan to act on." },
+      { "q": "Does it download the video first?", "a": "No. Only the subtitle track is read, which is why summarizing is far quicker than watching or downloading the file." }
+    ]
+  },
+  "/pricing": {
+    "heading": "Pricing at a Glance",
+    "tldr": "Payments are not enabled in HJ Video Downloader yet, so the pricing page only outlines planned tiers. The free plan allows five downloads per day; Pro adds 4K quality, unlimited batching and AI summaries; Team targets collaboration. Treat live pages as the source of truth.",
+    "points": [
+      "Free: five downloads per day, no sign-up",
+      "Pro: 4K quality, unlimited batching, AI summaries",
+      "Team: for shared use",
+      "Status: no payment processing is connected"
+    ],
+    "facts": [
+      ["Free plan", "5 downloads per day, no sign-up"],
+      ["Pro plan", "4K / unlimited batch / AI summaries"],
+      ["Team plan", "Collaboration"],
+      ["Payment status", "Not connected; benefits display only"]
+    ],
+    "faq": [
+      { "q": "Do I have to pay?", "a": "No. Payment processing is not connected yet, so the free tier for parsing and downloading works right now." },
+      { "q": "Is the free plan limited?", "a": "It allows five downloads per day. Upgrade later if you need higher quality and unlimited batching." }
+    ]
+  },
+  "/guides": {
+    "heading": "Guide Collection at a Glance",
+    "tldr": "Four guides: the complete download walkthrough, a troubleshooting checklist, how to summarize long videos with AI, and the legal boundaries of saving online video. Beginners should read the first three in order.",
+    "points": [
+      "How to Download Online Videos: link to file, end to end",
+      "Video Download Failed: four-layer checklist and error reference",
+      "Summarizing a One-Hour Video: the summarize-then-download workflow",
+      "Is Downloading Allowed: personal use, remixing and copyright"
+    ],
+    "facts": [
+      ["Guides", "4"],
+      ["Updated", "2026-10-15"],
+      ["Level", "Beginner to troubleshooting"]
+    ],
+    "faq": [
+      { "q": "Which guide should I read first?", "a": "Start with How to Download Online Videos to complete the flow once, then keep the troubleshooting guide handy for specific errors." }
+    ]
+  },
+  "/compare": {
+    "heading": "Comparison Centre at a Glance",
+    "tldr": "Four comparisons: how to choose a downloader (six criteria, three form factors), yt-dlp versus youtube-dl, downloading versus screen recording, and pairing downloads with AI summaries. Each ends with scenario-based verdicts instead of rankings.",
+    "points": [
+      "Choosing a Downloader: six criteria, comparison table, six scenarios",
+      "yt-dlp vs youtube-dl: maintenance, fragmented downloads, migration",
+      "Downloading vs Recording: quality, time, DRM and subtitles",
+      "Downloads and AI Summaries: summarize first, download second"
+    ],
+    "facts": [
+      ["Criteria", "Sites / output / batching / setup / privacy / price"],
+      ["Verdict", "No universally best tool; download beats recording; summarize before downloading"]
+    ],
+    "faq": [
+      { "q": "Is an online tool or desktop software better?", "a": "Occasional and cross-device use favours online tools; heavy batch work with fine control favours desktop software; extensions suit save-as-you-watch." },
+      { "q": "Should new projects use yt-dlp or youtube-dl?", "a": "Usually yt-dlp. It is the actively maintained fork, keeps up with platform changes, and supports concurrent fragments plus finer format selection." }
+    ]
+  },
+  "/bilibili-video-download": {
+    "heading": "Bilibili Downloads at a Glance",
+    "tldr": "Bilibili video download: paste a BV link or b23.tv short link to parse it, choose 1080P+ or 1080P60 quality, batch-pack multi-part collections into a zip, or extract MP3. Premium-only qualities require a cookie file on the server.",
+    "points": [
+      "Supports BV links and b23.tv short links",
+      "1080P+ and 1080P60 where available",
+      "Multi-part collections expand and zip automatically",
+      "MP3 mode for audio only",
+      "Cookies unlock members-only qualities"
+    ],
+    "facts": [
+      ["Domains", "bilibili.com, b23.tv"],
+      ["Max quality", "1080P+ / 1080P60"],
+      ["Formats", "MP4 / MP3"],
+      ["Batch", "Yes, zipped automatically"],
+      ["Cookies", "Required for premium qualities"],
+      ["AI summary", "Available when subtitles exist"]
+    ]
+  },
+  "/youtube-video-download": {
+    "heading": "YouTube Downloads at a Glance",
+    "tldr": "YouTube video download: paste a watch or youtu.be link and the picture and audio streams are merged into one MP4. Up to 4K, MP3 extraction and playlists supported. Cookies are recommended to reduce bot-check failures.",
+    "points": [
+      "Video and audio merged into one MP4",
+      "Quality up to 4K where available",
+      "Shorts and playlists supported",
+      "MP3 audio export",
+      "Cookies recommended against bot checks"
+    ],
+    "facts": [
+      ["Domains", "youtube.com, youtu.be"],
+      ["Max quality", "4K (2160p)"],
+      ["Formats", "MP4 / MP3"],
+      ["Batch", "Playlists supported"],
+      ["Requires", "ffmpeg for merging streams"],
+      ["Cookies", "Recommended to avoid bot checks"]
+    ]
+  },
+  "/douyin-video-download": {
+    "heading": "Douyin Downloads at a Glance",
+    "tldr": "Douyin video download: take the real URL from Share → Copy Link and paste it here to save the original, watermark-free clip, extract the soundtrack, or batch several links into a zip. Share text alone cannot be parsed.",
+    "points": [
+      "Watermark-free original quality",
+      "Gallery posts extracted image by image",
+      "MP3 export for the soundtrack",
+      "Multi-link batch packaging",
+      "Requires a real link, not share text"
+    ],
+    "facts": [
+      ["Domains", "douyin.com, iesdouyin.com"],
+      ["Formats", "MP4 / MP3"],
+      ["Batch", "Yes, zipped automatically"],
+      ["Input", "Real URL required; share codes fail"]
+    ]
+  },
+  "/xiaohongshu-video-download": {
+    "heading": "Xiaohongshu Downloads at a Glance",
+    "tldr": "Xiaohongshu download: paste a note link and the format is detected automatically — video notes download at your chosen quality, galleries are extracted image by image. Audio extraction and batch links are supported, and xhslink.com short links work.",
+    "points": [
+      "Both video notes and image galleries",
+      "Format detected automatically",
+      "Original picture quality preserved",
+      "MP3 mode available",
+      "Batch links packaged together"
+    ],
+    "facts": [
+      ["Domains", "xiaohongshu.com, xhslink.com"],
+      ["Formats", "MP4 / MP3 / original images"],
+      ["Batch", "Yes, zipped automatically"],
+      ["Entry", "Share → Copy Link"]
+    ]
+  },
+  "/weibo-video-download": {
+    "heading": "Weibo Downloads at a Glance",
+    "tldr": "Weibo video download: paste a post link and the parser resolves reposts back to the real video source, including Miaopai. Choose a quality tier, export MP3 or batch several links together. Open in a browser first for the cleanest URL.",
+    "points": [
+      "Resolves reposts to the source video",
+      "All available quality tiers listed",
+      "MP3 audio export",
+      "Batch processing with packaging",
+      "Best copied from the browser bar"
+    ],
+    "facts": [
+      ["Domains", "weibo.com, video.weibo.com"],
+      ["Formats", "MP4 / MP3"],
+      ["Batch", "Yes, zipped automatically"],
+      ["Note", "Open app links in a browser first"]
+    ]
+  },
+  "/kuaishou-video-download": {
+    "heading": "Kuaishou Downloads at a Glance",
+    "tldr": "Kuaishou video download: paste the share link to save the quality the creator uploaded instead of the watermarked, compressed in-app copy. Audio extraction and multi-link batch packaging are supported for archiving highlights and tutorials.",
+    "points": [
+      "Original quality, no re-compression",
+      "MP3 mode for audio",
+      "Multiple links zipped together",
+      "Everything in the browser"
+    ],
+    "facts": [
+      ["Domains", "kuaishou.com, chenzhongtech.com"],
+      ["Formats", "MP4 / MP3"],
+      ["Batch", "Yes, zipped automatically"],
+      ["Input", "Share → Copy Link"]
+    ]
+  },
+  "/twitter-video-download": {
+    "heading": "Twitter / X Downloads at a Glance",
+    "tldr": "Twitter and X download: paste a tweet link to save its video or GIF, including multi-video tweets, with audio extraction and batch packaging. x.com and t.co links resolve automatically; visibility-restricted posts need cookies.",
+    "points": [
+      "Tweet videos and GIFs",
+      "Multi-video tweets expanded",
+      "x.com and t.co links supported",
+      "MP3 audio export",
+      "Batch into a zip"
+    ],
+    "facts": [
+      ["Domains", "twitter.com, x.com, t.co"],
+      ["Formats", "MP4 / MP3 (GIFs are silent video)"],
+      ["Batch", "Yes, zipped automatically"],
+      ["Cookies", "Needed for restricted posts"]
+    ]
+  },
+  "/instagram-video-download": {
+    "heading": "Instagram Downloads at a Glance",
+    "tldr": "Instagram download: paste a Reels or post link to save public Reels, single-video posts and carousel images at the best quality served, or export just the audio. Private accounts are restricted content that requires the author's permission.",
+    "points": [
+      "Reels and post videos",
+      "Carousels image by image",
+      "No login for public content",
+      "MP3 audio export"
+    ],
+    "facts": [
+      ["Domains", "instagram.com, instagr.am"],
+      ["Formats", "MP4 / MP3 / original images"],
+      ["Batch", "Multiple links"],
+      ["Limits", "Public content only; private needs permission"]
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "slug": "youtube-dl-vs-yt-dlp",
+  "order": 2,
+  "title": "yt-dlp vs youtube-dl: What Changed and What to Do | HJ Video Downloader",
+  "description": "An objective comparison of yt-dlp and youtube-dl across maintenance status, download speed, site coverage, licence and options, plus what to watch for when migrating existing scripts.",
+  "keywords": ["yt-dlp vs youtube-dl", "is youtube-dl still maintained", "youtube-dl alternative", "yt-dlp tutorial", "command line video download"],
+  "h1": "yt-dlp vs youtube-dl",
+  "sub": "How they relate, what actually differs, and three migration notes",
+  "date": "2026-10-15",
+  "tldr": "yt-dlp is the actively maintained fork of youtube-dl. After youtube-dl's development slowed down, the community carried maintenance forward in yt-dlp, fixing broken extractors whenever platforms change, and adding concurrent fragmented downloads, richer metadata handling and finer format selection. New projects generally pick yt-dlp.",
+  "toc": [
+    { "id": "relation", "text": "How the two are related" },
+    { "id": "diff", "text": "Five dimensions compared" },
+    { "id": "migrate", "text": "Migration notes" },
+    { "id": "usecase", "text": "When youtube-dl still turns up" }
+  ],
+  "matrix": {
+    "caption": "yt-dlp and youtube-dl compared objectively",
+    "headers": ["Dimension", "yt-dlp", "youtube-dl"],
+    "rows": [
+      ["Project status", "Actively maintained, keeps up with platform changes", "Release cadence has slowed markedly"],
+      ["Site coverage", "Continuously extended and repaired", "Historically broad, but new sites and token support lag"],
+      ["Download method", "Concurrent fragmented downloads, better use of bandwidth", "Mostly single connection"],
+      ["Format selection", "Finer filtering, sorting and merging", "Relatively basic"],
+      ["Licence", "Unlicense (public domain)", "Unlicense (public domain)"],
+      ["Command compatibility", "Most common flags match", "The original flag set"]
+    ]
+  },
+  "sections": [
+    {
+      "id": "relation",
+      "heading": "How the two are related",
+      "paragraphs": [
+        "youtube-dl is the original open-source command line downloader with a huge list of supported sites. As its release cadence slowed, extractors broke on platforms that changed often, and the community forked maintenance into yt-dlp.",
+        "Both are released under the Unlicense (public domain) and their command styles are close, which is why migrating usually costs little. HJ Video Downloader runs on yt-dlp."
+      ]
+    },
+    {
+      "id": "diff",
+      "heading": "Five dimensions compared",
+      "paragraphs": [
+        "Maintenance is the most practical difference: platforms rotate signatures several times a year, and only a fork that follows along still works today.",
+        "On transfer, yt-dlp supports concurrent fragments, friendlier to long videos and large files; youtube-dl is mostly single connection.",
+        "On selection, yt-dlp offers richer expressions so you can pin down a stream by resolution, codec and bitrate.",
+        "On metadata, yt-dlp exposes more options around subtitles, chapters and thumbnails — one reason this site can read subtitle tracks directly for AI summaries."
+      ]
+    },
+    {
+      "id": "migrate",
+      "heading": "Migration notes",
+      "paragraphs": [
+        "Most everyday flags (-f, -o, --no-playlist) behave the same, so swapping the command name is usually enough; a few names and defaults differ, so check the official docs.",
+        "Format expressions are richer: keep your old -f string until everything works, then refine it if you need to.",
+        "Newer releases require a recent Python — mind your runtime — and ffmpeg remains required for merging streams."
+      ]
+    },
+    {
+      "id": "usecase",
+      "heading": "When youtube-dl still turns up",
+      "paragraphs": [
+        "Long-lived environments that never upgrade tend to keep the old binary for stability, and some distribution repositories still ship youtube-dl.",
+        "For anything new, the usual advice is yt-dlp plus routine upgrades — which is why this project updates the core automatically at startup."
+      ]
+    }
+  ],
+  "pick": [
+    { "scenario": "New project or new script", "answer": "Use yt-dlp and put auto-updates in your startup routine" },
+    { "scenario": "Migrating old scripts", "answer": "Swap the command name, get it green, then adopt the new expressions" },
+    { "scenario": "Environment that never upgrades", "answer": "Keep the old version and accept that some sites will drift out of support" }
+  ],
+  "conclusion": "In one line: yt-dlp is youtube-dl's active successor, and it should be the default choice for almost every scenario."
+}

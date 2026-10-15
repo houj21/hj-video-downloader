@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = 'compare' %}
+{% include 'seo/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="面包屑导航">
+      <a href="/">HJ 视频下载</a><span aria-hidden="true">›</span>
+      <span aria-current="page">对比选型</span>
+    </nav>
+    <h1 class="hero__title">工具对比与选型</h1>
+    <p class="hero__sub">{{ index.description }}</p>
+  </div>
+</section>
+
+{% include 'seo/answer_block.html' %}
+
+<section class="section">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">全部对比文章</h2>
+        <p class="section__desc">每篇都给出可执行结论，而不是排行榜</p>
+      </div>
+    </div>
+    <div class="seo-grid">
+      {% for item in items %}
+      <a class="seo-card" href="{{ item.path }}" title="{{ item.title }}">
+        <span class="seo-card__tag">{{ ui.compare_card_tag }}</span>
+        <h3 class="seo-card__title">{{ item.h1 }}</h3>
+        <p class="seo-card__desc">{{ item.description or item.tldr }}</p>
+        <span class="seo-card__more">阅读全文 →</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">相关入口</h2>
+      </div>
+    </div>
+    <div class="seo-links">
+      <a href="/guides" title="视频下载使用指南">使用指南合集</a>
+      <a href="/faq" title="常见问题">常见问题汇总</a>
+      <a href="/summarize" title="AI 视频总结">AI 视频总结</a>
+      {% for item in footer_platforms %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}视频下载</a>{% endfor %}
+    </div>
+  </div>
+</section>
+
+{% include 'seo/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -9,8 +9,12 @@ import sys
 import zipfile
 import subprocess
 import threading
-from flask import Flask, request, jsonify, send_file, render_template, Response, stream_with_context
+from flask import (Flask, request, jsonify, send_file, render_template, Response,
+                   stream_with_context, abort, has_request_context)
 
+import seo
+import seo_content
+import seo_geo
 import summarizer
 
 app = Flask(__name__)
@@ -302,6 +306,214 @@ def pricing():
 @app.route("/summarize")
 def summarize_page():
     return render_template("summarize.html")
+
+
+# ==================== SEO / GEO 支持（只新增能力，不改动既有功能） ====================
+
+# 每个语言对应的主行长路径中文为 index.html
+TEMPLATES = {
+    "zh": {
+        "home": "index.html", "summarize": "summarize.html", "pricing": "pricing.html",
+        "faq": "faq.html", "guides": "guides.html", "guide": "guide.html",
+        "compares": "compares.html", "compare": "compare.html", "landing": "landing.html",
+        "404": "404.html",
+    },
+    "en": {
+        "home": "en/home.html", "summarize": "en/summarize.html", "pricing": "en/pricing.html",
+        "faq": "en/faq.html", "guides": "en/guides.html", "guide": "en/guide.html",
+        "compares": "en/compares.html", "compare": "en/compare.html", "landing": "en/landing.html",
+        "404": "en/404.html",
+    },
+}
+EN = seo.EN_PREFIX
+
+
+@app.context_processor
+def inject_seo_meta():
+    """为所有模板注入当前页面的 SEO/GEO 元信息（由 seo.py 按请求路径生成）。"""
+    path = request.path if has_request_context() else "/"
+    meta = seo.meta_for(path)
+    lang = meta["lang"]
+    return {
+        "seo": meta,
+        "lang": lang,
+        "ui": seo_content.load_ui(lang),
+        "answer": meta.get("answer") or {},
+        "footer_platforms": platform_links(lang),
+        "guide_links": guide_links(lang),
+        "compare_links": compare_links(lang),
+    }
+
+
+def _localized(data_list, lang):
+    """把数据项的 path 按语言补上前缀，供模板做内链。"""
+    out = []
+    for item in data_list:
+        path = item.get("path")
+        if not path:
+            continue
+        out.append({
+            "slug": item.get("slug"),
+            "path": (EN + path) if lang == "en" else path,
+            "name": item.get("name"),
+            "title": item.get("title"),
+            "h1": item.get("h1"),
+            "description": item.get("description"),
+            "tldr": item.get("tldr"),
+        })
+    return out
+
+
+def platform_links(lang="zh"):
+    """供页脚 / 相关推荐使用的精简平台列表。"""
+    return _localized([data for _, data in seo_content.load_platforms(lang)], lang)
+
+
+def guide_links(lang="zh"):
+    return _localized([data for _, data in seo_content.load_guides(lang)], lang)
+
+
+def compare_links(lang="zh"):
+    return _localized([data for _, data in seo_content.load_compares(lang)], lang)
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    return Response(seo_geo.robots_txt(), mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    return Response(seo.sitemap_xml(), mimetype="application/xml")
+
+
+@app.route("/llms.txt")
+def llms_txt():
+    return Response(seo_geo.llms_txt("zh"), mimetype="text/plain")
+
+
+@app.route("/llms-full.txt")
+def llms_full_txt():
+    return Response(seo_geo.llms_full_txt("zh"), mimetype="text/plain")
+
+
+@app.route(EN + "/llms.txt")
+def llms_txt_en():
+    return Response(seo_geo.llms_txt("en"), mimetype="text/plain")
+
+
+@app.route(EN + "/llms-full.txt")
+def llms_full_txt_en():
+    return Response(seo_geo.llms_full_txt("en"), mimetype="text/plain")
+
+
+# ---------- 常见问题 ----------
+
+@app.route("/faq")
+def faq_page():
+    return render_template(TEMPLATES["zh"]["faq"], faq=seo_content.load_faq("zh"))
+
+
+@app.route(EN + "/faq")
+def faq_page_en():
+    return render_template(TEMPLATES["en"]["faq"], faq=seo_content.load_faq("en"))
+
+
+# ---------- 使用指南 ----------
+
+@app.route("/guides")
+def guides_index():
+    return render_template(
+        TEMPLATES["zh"]["guides"],
+        index=seo_content.load_guide_index("zh"),
+        guides=[data for _, data in seo_content.load_guides("zh")],
+        items=[data for _, data in seo_content.load_guides("zh")],
+    )
+
+
+@app.route(EN + "/guides")
+def guides_index_en():
+    return render_template(
+        TEMPLATES["en"]["guides"],
+        index=seo_content.load_guide_index("en"),
+        guides=[data for _, data in seo_content.load_guides("en")],
+        items=[data for _, data in seo_content.load_guides("en")],
+    )
+
+
+@app.route("/guides/<slug>")
+def guide_detail(slug):
+    return _render_guide(slug, "zh")
+
+
+@app.route(EN + "/guides/<slug>")
+def guide_detail_en(slug):
+    return _render_guide(slug, "en")
+
+
+def _render_guide(slug, lang):
+    guides = seo_content.load_guides(lang)
+    for _, guide in guides:
+        if guide["slug"] == slug:
+            related = [data for _, data in guides if data["slug"] != slug][:3]
+            return render_template(TEMPLATES[lang]["guide"], g=guide, related=related)
+    abort(404)
+
+
+# ---------- 对比与选型 ----------
+
+@app.route("/compare")
+def compares_index():
+    return render_template(
+        TEMPLATES["zh"]["compares"],
+        index=seo_content.load_compare_index("zh"),
+        items=[data for _, data in seo_content.load_compares("zh")],
+    )
+
+
+@app.route(EN + "/compare")
+def compares_index_en():
+    return render_template(
+        TEMPLATES["en"]["compares"],
+        index=seo_content.load_compare_index("en"),
+        items=[data for _, data in seo_content.load_compares("en")],
+    )
+
+
+@app.route("/compare/<slug>")
+def compare_detail(slug):
+    return _render_compare(slug, "zh")
+
+
+@app.route(EN + "/compare/<slug>")
+def compare_detail_en(slug):
+    return _render_compare(slug, "en")
+
+
+def _render_compare(slug, lang):
+    compares = seo_content.load_compares(lang)
+    for _, item in compares:
+        if item["slug"] == slug:
+            related = [data for _, data in compares if data["slug"] != slug][:3]
+            return render_template(TEMPLATES[lang]["compare"], c=item, related=related)
+    abort(404)
+
+
+# ---------- 英文版核心页 ----------
+
+@app.route(EN)
+def home_en():
+    return render_template(TEMPLATES["en"]["home"], platforms=platform_links("en"))
+
+
+@app.route(EN + "/summarize")
+def summarize_page_en():
+    return render_template(TEMPLATES["en"]["summarize"])
+
+
+@app.route(EN + "/pricing")
+def pricing_en():
+    return render_template(TEMPLATES["en"]["pricing"])
 
 
 @app.route("/api/info", methods=["POST"])
@@ -618,6 +830,42 @@ def summary_subtitle_download():
         mimetype="text/plain; charset=utf-8",
         headers={"Content-Disposition": summarizer.content_disposition(f"{base}字幕.{fmt}")},
     )
+
+
+def register_platform_pages():
+    """按 data/seo*/platforms 下的数据文件注册长尾落地页路由（中英双语）。"""
+    for lang in ("zh", "en"):
+        platforms = dict(seo_content.load_platforms(lang))
+        template = TEMPLATES[lang]["landing"]
+        for slug, data in platforms.items():
+            base_path = data.get("path") or ("/%s-video-download" % slug)
+            full_path = (EN + base_path) if lang == "en" else base_path
+            related_links = [
+                {
+                    "name": platforms[key].get("name"),
+                    "title": platforms[key].get("title"),
+                    "path": (EN if lang == "en" else "") + (platforms[key].get("path") or ""),
+                }
+                for key in data.get("related", []) if key in platforms
+            ]
+
+            def view(slug=slug, related_links=related_links, template=template, lang=lang):
+                page = dict(seo_content.load_platforms(lang))[slug]
+                return render_template(template, p=page, related=related_links)
+
+            app.add_url_rule(full_path, "platform_%s_%s" % (lang, slug), view)
+
+
+register_platform_pages()
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    """404 返回友好页面；API 路径保持原来的 JSON 行为不变。"""
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Not found"}), 404
+    lang = seo.detect_lang(request.path)
+    return render_template(TEMPLATES[lang]["404"]), 404
 
 
 def update_ytdlp():

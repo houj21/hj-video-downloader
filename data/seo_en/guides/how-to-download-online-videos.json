@@ -1,0 +1,85 @@
+{
+  "slug": "how-to-download-online-videos",
+  "order": 1,
+  "title": "How to Download Online Videos to Your Device | HJ Video Downloader",
+  "description": "A complete walkthrough: copying a clean link, parsing the video, choosing MP4 or MP3 and a quality level, batch packaging, saving the file, plus mobile differences and four mistakes beginners keep making.",
+  "keywords": ["how to download online videos", "save video from website", "download video to mp4", "video download tutorial", "save online video to computer"],
+  "h1": "How to Download Online Videos",
+  "sub": "From copying the link to having the file on your disk",
+  "date": "2026-10-15",
+  "toc": [
+    { "id": "prepare", "text": "Before you start: two checks" },
+    { "id": "copy-link", "text": "Step 1: copy a clean link" },
+    { "id": "parse", "text": "Step 2: paste and parse" },
+    { "id": "choose", "text": "Step 3: pick format and quality" },
+    { "id": "save", "text": "Step 4: download and save" },
+    { "id": "batch", "text": "Batch downloads and playlists" },
+    { "id": "mobile", "text": "On mobile" },
+    { "id": "pitfalls", "text": "Four common mistakes" }
+  ],
+  "sections": [
+    {
+      "id": "prepare",
+      "heading": "Before you start: two checks",
+      "paragraphs": [
+        "First, make sure you own the content or have permission to save it — everything else comes after that. This tool is not meant for paid or copyrighted material.",
+        "Second, check that ffmpeg is installed and on PATH. Big platforms ship picture and sound as separate streams, and ffmpeg merges them; without it you can end up with video and no audio."
+      ]
+    },
+    {
+      "id": "copy-link",
+      "heading": "Step 1: copy a clean link",
+      "paragraphs": [
+        "Copying the full URL from the browser address bar is the most reliable option. If you are sharing from an app, always choose Copy Link rather than copying the decorated share text — the latter leaves the parser guessing where the URL actually is.",
+        "Short links such as b23.tv, youtu.be and t.co resolve fine. Links with anchors or custom app protocols do not; open them in a browser first, then copy."
+      ]
+    },
+    {
+      "id": "parse",
+      "heading": "Step 2: paste and parse",
+      "paragraphs": [
+        "Open HJ Video Downloader, paste the link (space-separated if you have several) and press Parse. The server calls yt-dlp for the title, thumbnail, duration, uploader and every available quality — usually within seconds.",
+        "If you paste a collection or playlist link, the playlist endpoint expands it into individual videos for you."
+      ]
+    },
+    {
+      "id": "choose",
+      "heading": "Step 3: pick format and quality",
+      "paragraphs": [
+        "Each parsed card lists every resolution the source offers; click to select one. The default combines the best picture with the best audio and outputs MP4.",
+        "For audio only, switch the toggle to MP3 before downloading. A minute-long MP3 is often a tenth the size of the video, which is ideal for lectures, interviews and podcasts."
+      ]
+    },
+    {
+      "id": "save",
+      "heading": "Step 4: download and save",
+      "paragraphs": [
+        "Click Download MP4 and the job joins the queue with a live progress bar. Downloads run on the server in the background, so scrolling around does not interrupt them.",
+        "At 100%, click Save to device. Files are removed from the server after a while, so do not leave them sitting there."
+      ]
+    },
+    {
+      "id": "batch",
+      "heading": "Batch downloads and playlists",
+      "paragraphs": [
+        "With several links parsed at once, a Download All button appears. Files are fetched one by one and zipped together, so one click saves everything.",
+        "Run large batches over Wi-Fi and avoid mixing in many links that require a logged-in session."
+      ]
+    },
+    {
+      "id": "mobile",
+      "heading": "On mobile",
+      "paragraphs": [
+        "The steps are identical; only the layout changes to a single column. The difference is where the file lands: iOS Safari typically offers Save to Files, while Android browsers usually drop it into Downloads."
+      ]
+    },
+    {
+      "id": "pitfalls",
+      "heading": "Four common mistakes",
+      "paragraphs": [
+        "Pasting share text instead of a URL; giving up on a platform that is actually supported because the link was dirty; retrying a login-only video without cookies until the throttling kicks in; and forgetting to save the file before the server sweeps it away."
+      ]
+    }
+  ],
+  "conclusion": "Once these four steps click, most downloads succeed first time. To save even more time, run the video through the AI summary first and only download the ones worth keeping."
+}

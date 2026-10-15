@@ -1,0 +1,81 @@
+{
+  "slug": "downloader-vs-ai-summary",
+  "order": 4,
+  "title": "Video Downloaders vs AI Summaries: Which Do You Need? | HJ Video Downloader",
+  "description": "Downloading preserves source files while AI summaries extract meaning. Compare outputs, time and data costs and their limits, and follow a summarize-first workflow that saves bandwidth.",
+  "keywords": ["AI video summary vs download", "do I need to download the video", "summarize first then download", "video notes workflow", "how to skim long videos"],
+  "h1": "Video Downloading vs AI Summaries",
+  "sub": "One preserves the file, the other extracts the content — order matters",
+  "date": "2026-10-15",
+  "tldr": "Downloading solves \"keep it and play it offline\"; AI summarization solves \"is this worth watching, and what did it say\". The fastest order is summarize first: spend a few seconds on the one-line verdict, then download only the videos that earned it.",
+  "toc": [
+    { "id": "difference", "text": "Different problems" },
+    { "id": "cost", "text": "Cost and speed" },
+    { "id": "workflow", "text": "The summarize-first workflow" },
+    { "id": "limitation", "text": "Their limits" },
+    { "id": "combine", "text": "Three combined scenarios" }
+  ],
+  "matrix": {
+    "caption": "Downloading versus AI summarization",
+    "headers": ["Factor", "Downloading", "AI summary"],
+    "rows": [
+      ["Output", "Original video or audio file", "Notes: overview, chapters, key points, mind map"],
+      ["Speed", "Scales with file size and bandwidth", "Seconds rather than minutes"],
+      ["Data usage", "Downloads the whole video", "Reads subtitles only, negligible bandwidth"],
+      ["Requires", "A parseable video", "Subtitles (speech-to-text is not yet included)"],
+      ["Best for", "Offline watching, archiving", "Triaging value, note-taking, reporting"],
+      ["Searchable", "A binary file cannot be searched", "Text can be searched, copied and exported"]
+    ]
+  },
+  "sections": [
+    {
+      "id": "difference",
+      "heading": "Different problems",
+      "paragraphs": [
+        "Downloading keeps the original file and is meant for offline playback and long-term archiving.",
+        "AI summarization distils content into copyable, searchable, exportable text for triage and knowledge work. Neither replaces the other."
+      ]
+    },
+    {
+      "id": "cost",
+      "heading": "Cost and speed",
+      "paragraphs": [
+        "Downloading costs bandwidth and time: an hour of HD can easily be several gigabytes.",
+        "AI summarization only reads the subtitle track, finishing in 3-10 seconds, costing nothing but LLM tokens — roughly pennies for a one-hour transcript of 10-20k characters."
+      ]
+    },
+    {
+      "id": "workflow",
+      "heading": "The summarize-first workflow",
+      "paragraphs": [
+        "Paste the link and read the one-line overview; thirty seconds tells you whether it deserves your time.",
+        "If it does, scan the timestamped chapter outline and jump to the parts that matter.",
+        "Download the full file only once you know it is worth keeping. Everything you discarded was never downloaded in the first place."
+      ]
+    },
+    {
+      "id": "limitation",
+      "heading": "Their limits",
+      "paragraphs": [
+        "AI summarization depends on subtitles: no subtitles means no summary today, and auto-generated captions mishear proper nouns, so verify anything decision-critical against the source.",
+        "Downloading is bounded by rights: only save material you own or have permission to keep."
+      ]
+    },
+    {
+      "id": "combine",
+      "heading": "Three combined scenarios",
+      "paragraphs": [
+        "Online course: build the mental model from the summary, then download the full session as long-term reference.",
+        "Meeting recording: export the Markdown outline straight into your minutes and replay the original only where context matters.",
+        "Podcast: let the summary decide whether it is worth it, then save the MP3 for your commute instead of downloading up front."
+      ]
+    }
+  ],
+  "pick": [
+    { "scenario": "You are unsure about a long video", "answer": "Summarize first, then decide" },
+    { "scenario": "You must archive it", "answer": "Download at full quality" },
+    { "scenario": "You need notes or a report", "answer": "Summarize and export Markdown or Word" },
+    { "scenario": "The video has no subtitles", "answer": "Download only; wait for speech-to-text support" }
+  ],
+  "conclusion": "Archive with downloads, understand with summaries. Chain them together and an hour of video usually takes ten minutes."
+}

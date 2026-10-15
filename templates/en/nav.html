@@ -1,0 +1,40 @@
+<!-- ============ Navigation (English) ============ -->
+<header class="nav">
+  <div class="container nav__inner">
+    <a class="brand" href="/en" title="HJ Video Downloader">
+      <span class="brand__mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </span>
+      <span class="brand__name">HJ<span>Video</span></span>
+    </a>
+
+    <nav class="nav__links">
+      <a class="nav__link{% if nav_active == 'home' %} is-active{% endif %}" href="/en">Home</a>
+      <a class="nav__link{% if nav_active == 'summarize' %} is-active{% endif %}" href="/en/summarize">AI Summary</a>
+      <a class="nav__link{% if nav_active == 'pricing' %} is-active{% endif %}" href="/en/pricing">Pricing</a>
+      <a class="nav__link{% if nav_active == 'faq' %} is-active{% endif %}" href="/en/faq">FAQ</a>
+      <a class="nav__link{% if nav_active == 'guides' %} is-active{% endif %}" href="/en/guides">Guides</a>
+    </nav>
+
+    <a class="nav__cta" href="/en">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
+      Download Free
+    </a>
+
+    <button class="nav__burger" id="burger" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/en">Home · Download Video</a>
+    <a href="/en/summarize">AI Video Summarizer</a>
+    <a href="/en/pricing">Pricing</a>
+    <a href="/en/faq">FAQ</a>
+    <a href="/en/guides">Guides</a>
+  </div>
+</header>

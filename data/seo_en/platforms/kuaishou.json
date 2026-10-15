@@ -1,0 +1,34 @@
+{
+  "slug": "kuaishou",
+  "order": 6,
+  "name": "Kuaishou",
+  "alias": "快手 / ks",
+  "domains": ["kuaishou.com", "chenzhongtech.com"],
+  "title": "Kuaishou Video Downloader - Save Clips at Original Quality | HJ Video Downloader",
+  "description": "Download Kuaishou videos by pasting the share link: original upload quality instead of the watermarked, compressed in-app save, plus audio extraction and batch zip packaging.",
+  "keywords": ["kuaishou video downloader", "download kuaishou video", "kuaishou no watermark", "快手视频下载", "kuaishou to mp3"],
+  "h1": "Kuaishou Video Downloader",
+  "sub": "Paste a Kuaishou link and keep the original picture and sound",
+  "intro": [
+    "Saving inside the Kuaishou app usually adds a watermark and re-compresses the clip, whereas downloading gives you what the creator actually uploaded. Tap share, copy the link, come back here and paste it.",
+    "For highlights and tutorial clips you plan to archive, paste several links at once: they are processed together and zipped, so there is no repetitive clicking."
+  ],
+  "caps": [
+    { "name": "Original quality", "desc": "Skips the watermark and re-compression of in-app saving." },
+    { "name": "Audio extraction", "desc": "Export background music or voice with MP3 mode." },
+    { "name": "Batch packaging", "desc": "Several links download in sequence and zip together." },
+    { "name": "Nothing to install", "desc": "The whole flow runs in the browser." }
+  ],
+  "notes": [
+    "Use Share → Copy Link; plain water-mark codes are not recognized.",
+    "If a creator restricted downloads, respect that choice instead of working around it.",
+    "High request rates can trigger anti-bot systems — submit in smaller batches."
+  ],
+  "faq": [
+    { "q": "Why does parsing fail?", "a": "Most often the link is dirty. Copy the http address from the middle of the share text and remove the surrounding captions." },
+    { "q": "Is there a watermark-free version?", "a": "The download is the platform's source video. Some posts only exist as app-composited watermarked clips." },
+    { "q": "How do I use this on my phone?", "a": "Open this page in a mobile browser, paste the link, download, then Save to device — the file lands in your downloads folder." },
+    { "q": "Is there a batch limit?", "a": "No hard limit, but network speed and how fast the target responds set practical bounds, so batching avoids throttling." }
+  ],
+  "related": ["douyin", "weibo", "xiaohongshu"]
+}

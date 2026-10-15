@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = 'summarize' %}
+{% include 'en/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="Breadcrumb">
+      <a href="/en">HJ Video Downloader</a><span aria-hidden="true">›</span>
+      <span aria-current="page">AI Video Summarizer</span>
+    </nav>
+    <h1 class="hero__title">Understand an hour of video <em>in a minute</em></h1>
+    <p class="hero__sub">A one-line overview, timestamped chapters, key points and a mind map — plus follow-up questions about the video</p>
+    <div class="seo-inline-links">
+      <a class="btn btn--primary" href="/en/guides/ai-video-summary-workflow">How it works</a>
+      <a class="btn btn--ghost" href="/en">Or just download the video</a>
+    </div>
+  </div>
+</section>
+
+{% include 'seo/answer_block.html' %}
+
+<section class="section">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">What you get</h2>
+        <p class="section__desc">Four outputs, each designed for a different moment</p>
+      </div>
+    </div>
+    <div class="platform-grid">
+      <div class="platform-card">
+        <div class="platform-card__head"><i class="chip__dot"></i>One-line overview</div>
+        <p class="platform-card__desc">Decide in 30 seconds whether the video deserves your time at all.</p>
+      </div>
+      <div class="platform-card">
+        <div class="platform-card__head"><i class="chip__dot"></i>Timestamped chapters</div>
+        <p class="platform-card__desc">Jump straight to the section you care about instead of scrubbing.</p>
+      </div>
+      <div class="platform-card">
+        <div class="platform-card__head"><i class="chip__dot"></i>Key points</div>
+        <p class="platform-card__desc">Three to ten takeaways that carry the substance of the talk.</p>
+      </div>
+      <div class="platform-card">
+        <div class="platform-card__head"><i class="chip__dot"></i>Mind map</div>
+        <p class="platform-card__desc">See how the ideas connect to each other at a glance.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">How it works</h2>
+        <p class="section__desc">Reads subtitles, not pixels</p>
+      </div>
+    </div>
+    <ol class="seo-steps">
+      <li>
+        <span class="seo-steps__num" aria-hidden="true">1</span>
+        <div>
+          <h3 class="seo-steps__title">Paste the link</h3>
+          <p class="seo-steps__text">The subtitle track is fetched first — the video itself is never downloaded.</p>
+        </div>
+      </li>
+      <li>
+        <span class="seo-steps__num" aria-hidden="true">2</span>
+        <div>
+          <h3 class="seo-steps__title">Wait a few seconds</h3>
+          <p class="seo-steps__text">Fetching subtitles usually finishes in 3-10 seconds, even for long videos.</p>
+        </div>
+      </li>
+      <li>
+        <span class="seo-steps__num" aria-hidden="true">3</span>
+        <div>
+          <h3 class="seo-steps__title">Read, then download</h3>
+          <p class="seo-steps__text">Export Markdown, Word or PDF — or go back and download the full file if it is worth keeping.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+{% include 'seo/answer_faq.html' %}
+
+{% include 'en/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

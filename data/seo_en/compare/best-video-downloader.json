@@ -1,0 +1,87 @@
+{
+  "slug": "best-video-downloader",
+  "order": 1,
+  "title": "How to Choose a Video Downloader (2026) | HJ Video Downloader",
+  "description": "Six criteria before picking a video downloader — sites covered, quality options, batch features, install cost, privacy and price — plus a comparison of the three common form factors and recommendations for six typical scenarios.",
+  "keywords": ["best video downloader", "how to choose a video downloader", "video downloader comparison", "free video downloader", "online vs desktop downloader"],
+  "h1": "How to Choose a Video Downloader",
+  "sub": "Define the need first: six criteria, three form factors, six scenarios",
+  "date": "2026-10-15",
+  "tldr": "Picking a video downloader comes down to six things: which sites it covers, whether you can choose quality, whether it batches, whether anything must be installed, what happens to your files afterwards, and what it costs. Most people only need something browser-based that handles multiple platforms — not the tool with the longest feature list.",
+  "toc": [
+    { "id": "criteria", "text": "The six criteria" },
+    { "id": "forms", "text": "Three form factors compared" },
+    { "id": "scenarios", "text": "Six scenarios answered" },
+    { "id": "privacy", "text": "Privacy and compliance" },
+    { "id": "checklist", "text": "A one-line checklist" }
+  ],
+  "matrix": {
+    "caption": "The three common form factors, objectively compared",
+    "headers": ["Factor", "Online web tool", "Desktop software", "Browser extension"],
+    "rows": [
+      ["Setup cost", "None, open and use", "Install and keep it updated", "Install from the browser store"],
+      ["Works on mobile", "Yes, in the mobile browser", "Usually not", "Most mobile browsers do not support extensions"],
+      ["Batching and packaging", "Often supports multi-link zipping", "Fuller queue management", "Mostly one file at a time"],
+      ["Quality selection", "Depends on the tool", "Usually the full ladder", "Typically whatever is playing"],
+      ["Resident footprint", "Nothing left behind", "Resident, uses disk space", "Resident inside the browser"],
+      ["Best for", "Occasional use, multiple devices", "Heavy users who want fine control", "Save-as-you-watch, single files"]
+    ]
+  },
+  "sections": [
+    {
+      "id": "criteria",
+      "heading": "The six criteria",
+      "paragraphs": [
+        "First, site coverage: does it include the platforms you actually use, and does it keep up when platforms change — which decides whether the tool still works six months from now.",
+        "Second, output: can you choose quality, can you export MP4 and MP3, does it need ffmpeg for merging.",
+        "Third, batching: do you regularly process dozens of links, and can the result be zipped in one step.",
+        "Fourth, setup cost: install or not, usable on phones or not, sign-up required or not.",
+        "Fifth, privacy and compliance: whether files pass through someone else's server, how long they survive, whether cleanup policy is stated plainly.",
+        "Sixth, price: whether the free tier is enough, and whether the paid extras are genuinely things you need."
+      ]
+    },
+    {
+      "id": "forms",
+      "heading": "Three form factors compared",
+      "paragraphs": [
+        "Online tools win on zero setup and cross-device access — handy on a borrowed laptop or your phone. The trade-off is submitting links to a server, so a clear retention policy matters more.",
+        "Desktop software keeps compute and storage local, suiting heavy and bulk use, at the cost of installation, updates and disk space.",
+        "Extensions are unbeatable for save-as-you-watch, but usually capture only the playing quality and rarely handle batches."
+      ]
+    },
+    {
+      "id": "scenarios",
+      "heading": "Six scenarios answered",
+      "paragraphs": [
+        "Saving one video now and then: an online tool with nothing to install.",
+        "Archiving courses or meeting recordings: prioritize quality selection plus batching — desktop software or any web tool that zips batches.",
+        "Only after the music: confirm MP3 export instead of downloading the whole video and converting it.",
+        "Saving on your phone: online tools only, and check the page actually works on small screens.",
+        "Migrating a large back catalogue: batching and zip packaging are non-negotiable, alongside gentle request rates to avoid throttling.",
+        "You need the gist rather than the video: look for AI summarization and decide afterwards whether to download."
+      ]
+    },
+    {
+      "id": "privacy",
+      "heading": "Privacy and compliance",
+      "paragraphs": [
+        "Check three things: whether links are logged, how long files are kept, and whether automatic cleanup exists. Responsible tools say this out loud instead of staying vague.",
+        "Then look at the content itself. Only download material you own or have permission to save, and avoid paid, copyrighted or DRM-protected material."
+      ]
+    },
+    {
+      "id": "checklist",
+      "heading": "A one-line checklist",
+      "paragraphs": [
+        "In priority order: site coverage → quality selection → batch packaging → no install → clear cleanup policy → free tier. Clear all six and you have found yours."
+      ]
+    }
+  ],
+  "pick": [
+    { "scenario": "Occasional downloads, switching devices", "answer": "An online web tool; zero setup wins" },
+    { "scenario": "Bulk archiving with fine control", "answer": "Desktop software; queues and retries are better" },
+    { "scenario": "Saving on a phone", "answer": "Only online tools — mind the small-screen experience" },
+    { "scenario": "You only want the audio", "answer": "Insist on MP3 export, skip the full video" }
+  ],
+  "conclusion": "There is no universally best tool, only tools that fit a situation. Mapping the six criteria onto your own use beats reading ten \"best downloader\" listicles."
+}

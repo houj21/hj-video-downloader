@@ -1,0 +1,34 @@
+{
+  "slug": "douyin",
+  "order": 3,
+  "name": "Douyin",
+  "alias": "抖音 / dy",
+  "domains": ["douyin.com", "iesdouyin.com"],
+  "title": "Douyin Video Downloader - Save Watermark-Free Clips Online | HJ Video Downloader",
+  "description": "Download Douyin videos by pasting the share link: watermark-free video, image posts and background-audio extraction, with batch links packaged into a zip. Runs in mobile browsers too.",
+  "keywords": ["douyin video downloader", "download douyin video", "douyin no watermark", "douyin to mp3", "抖音视频下载"],
+  "h1": "Douyin Video Downloader",
+  "sub": "Paste a Douyin share link and save the clip — or just its audio",
+  "intro": [
+    "The annoying part of Douyin is not the video, it is the share text wrapped in hashtags and captions. Copy the real URL hidden inside it and HJ Video Downloader recognizes everything else automatically.",
+    "Beyond the clip itself, image posts and background audio are supported too: switch to MP3 to pull the soundtrack out. Several links pasted together are processed in one batch and zipped automatically."
+  ],
+  "caps": [
+    { "name": "Watermark-free", "desc": "Saves the original source video rather than cropping a watermark out afterwards." },
+    { "name": "Image posts", "desc": "Gallery-style posts are extracted image by image at original quality." },
+    { "name": "Audio extraction", "desc": "MP3 mode saves the background music or voice recording on its own." },
+    { "name": "Batch packaging", "desc": "Paste several links, download them all and get one zip." }
+  ],
+  "notes": [
+    "Use Share → Copy Link; plain text codes cannot be recognized as links.",
+    "If a creator has restricted downloads, respect that decision rather than trying to work around it.",
+    "Rapid repeated parsing can trigger anti-bot systems — split batches instead."
+  ],
+  "faq": [
+    { "q": "Why does my share text fail to parse?", "a": "A share code is text, not a URL. Copy the http link embedded in it and try again." },
+    { "q": "Is the video really watermark-free?", "a": "The tool saves the original video stream the platform serves. Where only a watermarked version exists, nothing is cropped or blurred." },
+    { "q": "Can I keep just the music?", "a": "Yes. Switch the format toggle to MP3 and download to write the audio track to a file." },
+    { "q": "How do I save it to my camera roll?", "a": "Open this page in a mobile browser, paste and parse, then tap Save to device. The file lands in your browser downloads; your gallery app can import from there." }
+  ],
+  "related": ["kuaishou", "xiaohongshu", "weibo"]
+}

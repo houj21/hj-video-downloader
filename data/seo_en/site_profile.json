@@ -1,0 +1,21 @@
+{
+  "name": "HJ Video Downloader",
+  "alt_name": "HJ Video Download & Summarizer",
+  "tagline": "Paste a link, save any video",
+  "description": "HJ Video Downloader is a browser-based tool for saving and summarizing online videos. Paste a link to parse it, then download as MP4 with your choice of quality, or extract MP3 audio. Batch downloads are packaged into a zip automatically. It can also generate an AI summary with a timestamped outline, key points and a mind map, then answer follow-up questions about the video. Built on yt-dlp and covers 1000+ sites.",
+  "detail": "This project is an open-source, self-use oriented practice. There is no database: jobs live in server memory and expire automatically. Only download content you own or have permission to save.",
+  "sameAs": [
+    "https://github.com/houj21/hj-video-downloader",
+    "https://github.com/yt-dlp/yt-dlp"
+  ],
+  "bullets": [
+    "Supported sites: 1000+, including YouTube, Bilibili, Douyin, Kuaishou, Weibo, Xiaohongshu, Twitter/X, Instagram, TikTok, Vimeo, Twitch, SoundCloud",
+    "Output formats: MP4 video with quality selection, MP3 audio",
+    "Batch: multiple links at once, auto-packaged as zip; playlists expand automatically",
+    "AI summary: one-line overview, timestamped chapters, key points, mind map, follow-up Q&A",
+    "Export: Markdown, Word (docx), PDF",
+    "Requirements: any modern browser, no sign-up, no installation, works on mobile",
+    "Stack: Python 3.13 + Flask + yt-dlp + ffmpeg + OpenAI-compatible LLM endpoint",
+    "Pricing: payments are not enabled yet, the free tier covers parsing and downloads"
+  ]
+}

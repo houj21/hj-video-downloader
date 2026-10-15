@@ -1,0 +1,34 @@
+{
+  "slug": "instagram",
+  "order": 8,
+  "name": "Instagram",
+  "alias": "IG / ins",
+  "domains": ["instagram.com", "instagr.am"],
+  "title": "Instagram Video Downloader - Save Reels and Post Videos | HJ Video Downloader",
+  "description": "Download Instagram videos by pasting a Reels or post link: public Reels, single-video posts and carousel images at available quality, plus MP3 audio extraction. No login for public content.",
+  "keywords": ["instagram video downloader", "download instagram reels", "IG video save", "reels downloader", "save instagram video"],
+  "h1": "Instagram Video Downloader",
+  "sub": "Paste a Reels or post link and save the public video or carousel",
+  "intro": [
+    "Instagram ships no download button, so parsing is the usual way to keep a Reels or post video. HJ Video Downloader supports public Reels, single-video posts and multi-image carousels, listing every available quality after you paste the link.",
+    "Private accounts and followers-only posts are restricted content — cookies may help technically, but you should be sure you have the author's permission first."
+  ],
+  "caps": [
+    { "name": "Reels", "desc": "Parse Reels links and download the highest quality served." },
+    { "name": "Post video", "desc": "Single-video posts expose all their quality tiers." },
+    { "name": "Carousels", "desc": "Multi-image posts are extracted picture by picture." },
+    { "name": "Audio extraction", "desc": "Save just the music or speech using MP3 mode." }
+  ],
+  "notes": [
+    "Public content downloads without login; private content requires the author's settings to be respected.",
+    "Instagram is sensitive to rapid requests — keep the pace moderate and batch gradually.",
+    "Save for personal use; credit the author and ask permission before reposting."
+  ],
+  "faq": [
+    { "q": "Do I need to log into Instagram?", "a": "Public content needs no login; just paste the link. Private account material is restricted, and even with cookies you should confirm you have permission." },
+    { "q": "Why did pasting the link do nothing?", "a": "Instagram links often carry tracking parameters such as igsh. They are usually tolerated — if it fails, copy a clean URL from the browser." },
+    { "q": "What happens with carousel posts?", "a": "The image set is detected automatically and every picture is saved, not just the cover." },
+    { "q": "Can I save the audio too?", "a": "Yes. Switch to MP3 audio mode before downloading to export the music or voice as an audio file." }
+  ],
+  "related": ["twitter", "xiaohongshu", "youtube"]
+}

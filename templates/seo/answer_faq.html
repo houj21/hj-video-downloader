@@ -1,0 +1,20 @@
+<!-- ===== 答案块 FAQ（GEO）：页面底部问答，与 JSON-LD FAQPage 对应 ===== -->
+{% if answer and answer.faq %}
+<section class="section section--tight" id="answer-faq">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">{{ ui.answer_faq_title }}</h2>
+      </div>
+    </div>
+    <div class="faq">
+      {% for item in answer.faq %}
+      <details class="faq__item"{% if loop.first %} open{% endif %}>
+        <summary class="faq__q">{{ item.q }}</summary>
+        <p class="faq__a">{{ item.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = 'compare' %}
+{% include 'en/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="Breadcrumb">
+      <a href="/en">HJ Video Downloader</a><span aria-hidden="true">›</span>
+      <span aria-current="page">Comparisons</span>
+    </nav>
+    <h1 class="hero__title">Comparisons &amp; Buying Guides</h1>
+    <p class="hero__sub">{{ index.description }}</p>
+  </div>
+</section>
+
+{% include 'seo/answer_block.html' %}
+
+<section class="section">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">All comparisons</h2>
+        <p class="section__desc">Each one ends with a verdict, not a ranking</p>
+      </div>
+    </div>
+    <div class="seo-grid">
+      {% for item in items %}
+      <a class="seo-card" href="{{ item.path }}" title="{{ item.title }}">
+        <span class="seo-card__tag">{{ ui.compare_card_tag }}</span>
+        <h3 class="seo-card__title">{{ item.h1 }}</h3>
+        <p class="seo-card__desc">{{ item.description or item.tldr }}</p>
+        <span class="seo-card__more">Read more →</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Keep reading</h2>
+      </div>
+    </div>
+    <div class="seo-links">
+      <a href="/en/guides">Downloading guides</a>
+      <a href="/en/faq">Full FAQ</a>
+      <a href="/en/summarize">AI video summarizer</a>
+      {% for item in footer_platforms %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}</a>{% endfor %}
+    </div>
+  </div>
+</section>
+
+{% include 'en/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

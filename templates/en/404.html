@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = '' %}
+{% include 'en/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <h1 class="hero__title">Page not found (404)</h1>
+    <p class="hero__sub">That address does not exist. Here is where you probably wanted to go:</p>
+    <div class="seo-inline-links">
+      <a class="btn btn--primary" href="/en">Download video</a>
+      <a class="btn btn--ghost" href="/en/summarize">AI summary</a>
+      <a class="btn btn--ghost" href="/en/pricing">Pricing</a>
+      <a class="btn btn--ghost" href="/en/faq">FAQ</a>
+      <a class="btn btn--ghost" href="/en/guides">Guides</a>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Download by platform</h2>
+      </div>
+    </div>
+    <div class="seo-links">
+      {% for item in footer_platforms %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}</a>{% endfor %}
+    </div>
+  </div>
+</section>
+
+{% include 'en/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

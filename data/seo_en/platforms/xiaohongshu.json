@@ -1,0 +1,34 @@
+{
+  "slug": "xiaohongshu",
+  "order": 4,
+  "name": "Xiaohongshu",
+  "alias": "REDnote / RED",
+  "domains": ["xiaohongshu.com", "xhslink.com"],
+  "title": "Xiaohongshu Video Downloader - Save Notes and Galleries | HJ Video Downloader",
+  "description": "Download Xiaohongshu (REDnote) videos by pasting a note link: video notes, image galleries and audio extraction at original quality, with multiple links batched into a zip. Works in mobile browsers.",
+  "keywords": ["xiaohongshu video downloader", "REDnote video download", "save xiaohongshu note", "小红书视频下载", "download RED video"],
+  "h1": "Xiaohongshu Video Downloader",
+  "sub": "Paste a REDnote link and save the video or gallery — in batches",
+  "intro": [
+    "REDnote mixes formats: one note might be a video, another thirty photos. HJ Video Downloader identifies the format during parsing, routing videos down the download path and extracting galleries image by image, so you never have to classify it yourself.",
+    "Tutorials, reviews and outfit videos tend to be re-watched anyway. Keeping a copy means no more scrolling back through search."
+  ],
+  "caps": [
+    { "name": "Video notes", "desc": "Single video notes are parsed and downloaded at the quality you pick." },
+    { "name": "Image galleries", "desc": "Gallery notes are extracted frame by frame — no manual saving." },
+    { "name": "Audio extraction", "desc": "Video notes can be saved as audio-only via MP3 mode." },
+    { "name": "Batch processing", "desc": "Several note links at once, zipped when finished." }
+  ],
+  "notes": [
+    "Copy links via Share → Copy Link; xhslink.com short links work too.",
+    "Image content belongs to its author — save privately and credit the source if you repost.",
+    "Avoid hammering one author's notes in quick succession; it may trigger rate limits."
+  ],
+  "faq": [
+    { "q": "Can gallery posts be saved?", "a": "Yes. Image notes are detected automatically and every picture is extracted at original quality." },
+    { "q": "Do xhslink.com short links work?", "a": "Yes, the short link is followed to the real note before parsing." },
+    { "q": "Is the download original quality?", "a": "The listed quality tiers are exactly what the platform serves, so choosing the top one gives you the original — nothing is re-encoded." },
+    { "q": "Does it work on my phone?", "a": "Yes. Open the site in a mobile browser; the layout adapts to small screens and saved files go to your downloads folder." }
+  ],
+  "related": ["douyin", "weibo", "kuaishou"]
+}

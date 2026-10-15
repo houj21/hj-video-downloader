@@ -1,0 +1,34 @@
+{
+  "slug": "twitter",
+  "order": 7,
+  "name": "Twitter / X",
+  "alias": "X / tweets",
+  "domains": ["twitter.com", "x.com", "t.co"],
+  "title": "Twitter / X Video Downloader - Save Tweet Videos and GIFs | HJ Video Downloader",
+  "description": "Download Twitter and X video by pasting the tweet link: full quality video, GIF animations and audio tracks, including multi-video tweets and batch zip packaging. x.com and t.co links resolve automatically.",
+  "keywords": ["twitter video downloader", "x video download", "download tweet video", "twitter gif download", "save x video"],
+  "h1": "Twitter / X Video Downloader",
+  "sub": "Paste a tweet link to save its video, GIF or audio",
+  "intro": [
+    "Tweet videos are streamed as adaptive HLS or multi-bitrate MP4, and Twitter offers no download button, so parsing is the only route. HJ Video Downloader lists every quality available and merges what you pick into a file.",
+    "x.com and t.co links both resolve automatically, and pasting several tweet links lets you archive the video discussion around a topic in one go."
+  ],
+  "caps": [
+    { "name": "Tweet video", "desc": "Reads out every quality tier the tweet offers so you can choose." },
+    { "name": "Multi-video tweets", "desc": "Tweets containing several videos are expanded one by one." },
+    { "name": "GIFs", "desc": "Animated GIFs can be saved alongside regular video." },
+    { "name": "Batch packaging", "desc": "Several tweet links download together into a zip." }
+  ],
+  "notes": [
+    "Sensitive or visibility-restricted posts need a logged-in session: configure cookies to access them.",
+    "A GIF is a silent video, so what you download is an MP4 file.",
+    "Credit creators and ask permission before reposting."
+  ],
+  "faq": [
+    { "q": "Do t.co links work?", "a": "Yes, short links are followed through to the actual tweet before parsing." },
+    { "q": "Does a multi-video tweet download everything?", "a": "Yes. Each video is expanded separately and you can pick a quality for each." },
+    { "q": "Why can't some tweets be downloaded?", "a": "Usually because the author limited visibility or the post was flagged. Those require a logged-in session, so configure cookies and retry." },
+    { "q": "Can I keep just the audio?", "a": "Yes. Switch the format toggle to MP3 and download to export the audio track." }
+  ],
+  "related": ["youtube", "instagram", "bilibili"]
+}

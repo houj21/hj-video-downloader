@@ -2042,3 +2042,307 @@ img { display: block; max-width: 100%; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ============================================================
+   SEO 扩展内容页样式（全部以 seo- 前缀命名，不影响原有样式）
+   ============================================================ */
+
+/* 面包屑 */
+.seo-crumbs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.seo-crumbs a:hover { color: #FFFFFF; }
+.seo-crumbs [aria-current] { color: #FFFFFF; font-weight: 600; }
+
+.seo-meta {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.seo-inline-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+.hero__hint code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 12px;
+}
+
+/* 正文排版 */
+.seo-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+.seo-prose {
+  max-width: 820px;
+  margin: 0 auto;
+  font-size: 17px;
+  line-height: 1.9;
+  color: var(--text);
+}
+.seo-prose p { margin-bottom: 16px; }
+.seo-prose h2 {
+  margin: 38px 0 14px;
+  padding-left: 14px;
+  border-left: 4px solid var(--brand);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.45;
+  scroll-margin-top: 96px;
+}
+.seo-prose h2:first-child { margin-top: 0; }
+.seo-prose h3 {
+  margin: 26px 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  scroll-margin-top: 96px;
+}
+.seo-prose ul,
+.seo-prose ol { margin: 0 0 16px 22px; }
+.seo-prose li { margin-bottom: 8px; }
+
+.seo-cta {
+  margin-top: 36px;
+  padding: 22px 24px;
+  border: 1px solid rgba(23, 119, 255, 0.28);
+  border-radius: var(--radius-card);
+  background: linear-gradient(135deg, rgba(23, 119, 255, 0.06), rgba(255, 176, 32, 0.08));
+}
+.seo-cta p { margin-bottom: 14px; font-weight: 600; }
+.seo-cta .seo-inline-links { justify-content: flex-start; margin-top: 0; }
+
+/* 目录侧栏 */
+.seo-toc {
+  position: sticky;
+  top: 92px;
+  align-self: start;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.seo-toc__title {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.seo-toc ol { margin-left: 18px; }
+.seo-toc li { margin-bottom: 8px; font-size: 14px; }
+.seo-toc a { color: var(--text-muted); }
+.seo-toc a:hover { color: var(--brand); }
+.seo-toc__cta { margin-top: 16px; width: 100%; justify-content: center; }
+
+/* 步骤列表 */
+.seo-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 820px;
+  margin: 0 auto;
+  list-style: none;
+}
+.seo-steps li {
+  display: flex;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.seo-steps__num {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+}
+.seo-steps__title { font-size: 16px; font-weight: 600; }
+.seo-steps__text { margin-top: 4px; font-size: 15px; color: var(--text-muted); }
+
+/* 注意事项 */
+.seo-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 820px;
+  margin: 0 auto;
+  list-style: none;
+}
+.seo-notes li {
+  position: relative;
+  padding: 12px 16px 12px 42px;
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+  font-size: 15px;
+  color: var(--text-muted);
+}
+.seo-notes li::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+/* 内链胶囊 */
+.seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.seo-links a {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.seo-links a:hover {
+  border-color: rgba(23, 119, 255, 0.45);
+  color: var(--brand);
+}
+
+/* 卡片网格（指南索引 / 相关阅读） */
+.seo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.seo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+.seo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+.seo-card__tag {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(23, 119, 255, 0.1);
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 600;
+}
+.seo-card__title { font-size: 17px; font-weight: 700; line-height: 1.5; }
+.seo-card__desc { font-size: 14px; color: var(--text-muted); flex: 1; }
+.seo-card__more { font-size: 14px; font-weight: 600; color: var(--brand); }
+
+/* 页脚平台内链 */
+.footer__platforms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.footer__platforms-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.footer__platforms a { font-size: 13px; color: var(--text-muted); }
+.footer__platforms a:hover { color: var(--brand); }
+
+@media (min-width: 900px) {
+  .seo-layout { grid-template-columns: 220px 1fr; }
+}
+
+@media (max-width: 768px) {
+  .seo-toc { position: static; padding: 16px; }
+  .seo-prose { font-size: 16px; }
+  .seo-prose h2 { font-size: 20px; }
+  .container.hero__content .seo-crumbs { font-size: 12px; }
+  .seo-answer { padding: 20px; }
+  .seo-facts th { width: 42%; }
+}
+
+/* ---------- GEO 答案块 / 事实表 ---------- */
+.seo-answer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 26px 28px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--brand);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.seo-answer__title { font-size: 20px; font-weight: 700; }
+.seo-answer__tldr { margin-top: 10px; font-size: 16px; line-height: 1.9; }
+.seo-answer__sub { margin: 18px 0 10px; font-size: 14px; font-weight: 700; color: var(--brand); }
+.seo-answer__points { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.seo-answer__points li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.seo-answer__points li::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.seo-facts { width: 100%; border-collapse: collapse; font-size: 15px; }
+.seo-facts th {
+  width: 34%;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-weight: 600;
+}
+.seo-facts td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+
+.seo-table-wrap { margin: 12px 0 22px; overflow-x: auto; }
+.seo-table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 15px; }
+.seo-table th,
+.seo-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; }
+.seo-table thead th { background: var(--bg-soft); font-weight: 700; }
+.seo-table tbody th { font-weight: 600; }
+.seo-table td { color: var(--text-muted); }
+
+@media print {
+  .seo-toc { display: none !important; }
+}

@@ -1,0 +1,44 @@
+{
+  "title": "FAQ - Video Downloading & AI Summaries | HJ Video Downloader",
+  "description": "Answers to the most common questions about HJ Video Downloader: supported sites, quality options, batch downloads, why downloads fail, how long files are kept, how AI video summaries work, what they cost and what is allowed.",
+  "keywords": ["video downloader FAQ", "why did my video download fail", "download video legally", "AI video summary FAQ", "save video to mp3"],
+  "h1": "Frequently Asked Questions",
+  "sub": "Downloads, AI summaries, file retention and responsible use",
+  "groups": [
+    {
+      "name": "Downloading",
+      "items": [
+        { "q": "Which sites does HJ Video Downloader support?", "a": "It runs on yt-dlp, so more than 1000 sites are covered, including YouTube, Bilibili, Douyin, Kuaishou, Weibo, Xiaohongshu (REDnote), Twitter/X, Instagram, TikTok, Vimeo, Twitch and SoundCloud. Paste a link and the right extractor is selected automatically." },
+        { "q": "Can I choose the quality? What formats are available?", "a": "Every quality the source provides is listed after parsing (360p / 720p / 1080p / 2K / 4K where available). Videos are merged and delivered as MP4; switching to MP3 mode extracts the audio track only, which suits online courses, podcasts and talks." },
+        { "q": "Is batch downloading supported?", "a": "Yes. Paste several links separated by spaces, parse them together, then click Download All. Everything is downloaded in order and packaged into a single zip file. Collections and playlists are expanded into individual videos first." },
+        { "q": "Can I use it on my phone?", "a": "Yes. Open the site in a mobile browser; the layout adapts to small screens. After parsing, tap Download, then Save to device once the progress bar completes. Use Wi-Fi for large files." }
+      ]
+    },
+    {
+      "name": "Troubleshooting",
+      "items": [
+        { "q": "Why do I get \"Unsupported URL\" or no result?", "a": "Usually the link is dirty — copied from a share sheet with extra text rather than the real URL. Copy the full address from the browser bar and try again. Note that private, deleted or paywalled videos cannot be fetched even with a correct link." },
+        { "q": "Why do I get 403 or \"Sign in to confirm you're not a bot\"?", "a": "Platforms sometimes require a logged-in session. Placing a Netscape-format cookies.txt next to app.py (or pointing COOKIE_FILE at it) lets the server load it at startup. Downloading usually still works without cookies, just at lower qualities." },
+        { "q": "The video downloaded but has no sound, or the quality looks low.", "a": "High-end platforms stream picture and sound separately, and merging them requires ffmpeg. Make sure ffmpeg is installed and on PATH — otherwise the tool falls back to a single stream." },
+        { "q": "Where are files kept and for how long?", "a": "Files are stored temporarily on the server (downloads/ folder), cleaned up after roughly 30 minutes; job records expire after an hour and the folder is capped in size. Always hit Save to device right after the download finishes." }
+      ]
+    },
+    {
+      "name": "AI summaries",
+      "items": [
+        { "q": "How does the AI video summary work?", "a": "It does not download the video or analyse frames. It fetches the subtitle track (usually 3-10 seconds), then asks a large language model to produce a one-line overview, timestamped chapters, key points and a mind map. That is why summarizing a one-hour video takes seconds instead of an hour." },
+        { "q": "Can it summarize videos without subtitles?", "a": "Not yet. The current version requires the video to have subtitles; Chinese subtitles are preferred and it falls back to other languages. Speech-to-text is planned for a later release." },
+        { "q": "Can I export the summary?", "a": "Yes — Markdown, Word (.docx) and PDF (print to PDF from the browser). The timestamped outline makes a ready-to-use note." },
+        { "q": "What do I need to configure?", "a": "An OpenAI-compatible API key set in the LLM_API_KEY environment variable (see llm_config.example.bat). Without it, the summary page shows setup instructions while downloads keep working." }
+      ]
+    },
+    {
+      "name": "Legal & pricing",
+      "items": [
+        { "q": "Is downloading videos legal?", "a": "This tool is an open-source, self-use oriented practice. Only download material you own or have permission to save, respect each platform's terms and your local laws, avoid paid or copyrighted content, and do not hammer the sites. You accept responsibility for how you use it." },
+        { "q": "Does it cost anything?", "a": "Payments are not enabled yet, so the free tier with parsing and downloading works right now. The pricing page only lists planned benefits." },
+        { "q": "Do you store my download history?", "a": "There is no database. Jobs stay in memory and expire automatically, video files are cleaned up on a timer, and subtitles plus summaries are processed in memory only." }
+      ]
+    }
+  ]
+}

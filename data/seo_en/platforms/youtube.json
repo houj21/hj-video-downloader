@@ -1,0 +1,34 @@
+{
+  "slug": "youtube",
+  "order": 2,
+  "name": "YouTube",
+  "alias": "yt / youtu.be",
+  "domains": ["youtube.com", "youtu.be"],
+  "title": "YouTube Video Downloader - MP4, MP3 and 4K in Your Browser | HJ Video Downloader",
+  "description": "Download YouTube videos by pasting the link: pick MP4 up to 4K or extract MP3 audio, with support for Shorts, list playlists and long-form videos. No install, no extension.",
+  "keywords": ["youtube video downloader", "download youtube video", "youtube to mp4", "youtube to mp3", "youtube shorts download", "4k youtube download"],
+  "h1": "YouTube Video Downloader",
+  "sub": "Paste a link, pick a resolution or export MP3 — Shorts and playlists included",
+  "intro": [
+    "YouTube is tricky because picture and audio travel as separate adaptive streams, so the highest quality often has no single merged file. HJ Video Downloader picks the best video and best audio streams server-side and merges them into one complete MP4, saving you that step entirely.",
+    "Beyond regular uploads, Shorts, list-parameter playlists and past live broadcasts all work. If you only want the sound, switch to MP3 and get an audio file — ideal for live music, talks and long podcasts."
+  ],
+  "caps": [
+    { "name": "Up to 4K", "desc": "1440p, 2160p (4K) and anything in between are listed when the source offers them." },
+    { "name": "Stream merging", "desc": "Best picture plus best audio are combined, so you never download a silent file." },
+    { "name": "MP3 extraction", "desc": "Export just the audio track — a fraction of the original file size." },
+    { "name": "Playlists", "desc": "Links with list parameters expand so you can batch download them." }
+  ],
+  "notes": [
+    "YouTube frequently shows \"Sign in to confirm you're not a bot\"; configuring cookies noticeably improves success rates.",
+    "Region-locked or members-only content needs matching regional access — check what you are allowed to save first.",
+    "For long videos, run the AI summary first and decide afterwards whether the file is worth keeping."
+  ],
+  "faq": [
+    { "q": "Can I download audio only?", "a": "Yes. Flip the format toggle to MP3 and download; the audio track is extracted directly." },
+    { "q": "Why is my download silent?", "a": "Picture and audio are separate streams, and merging needs ffmpeg. Make sure ffmpeg is installed and on PATH, otherwise it falls back to a single stream." },
+    { "q": "Are Shorts supported?", "a": "Yes. Shorts go through the same parsing pipeline, so you get the available qualities like any other video." },
+    { "q": "How do I fix \"Sign in to confirm you're not a bot\"?", "a": "That is YouTube's anti-bot check. Placing a Netscape-format cookies.txt on the server (default file name cookies.txt) and retrying raises the success rate substantially." }
+  ],
+  "related": ["bilibili", "instagram", "twitter"]
+}

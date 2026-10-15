@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 视频总结 — 一分钟读懂一小时视频 | HJ 视频下载</title>
-  <meta name="description" content="粘贴视频链接，AI 自动生成带时间戳的章节大纲、核心要点与思维导图，支持追问与导出 Markdown / Word / PDF。">
+  {% include 'seo/head.html' %}
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -90,6 +89,8 @@
       </div>
     </div>
   </section>
+
+  {% include 'seo/answer_block.html' %}
 
   <!-- ============ 未配置模型引导 ============ -->
   <section class="section section--tight no-print" id="configGuide" hidden>
@@ -272,6 +273,8 @@ call run.bat</pre>
       </div>
     </div>
   </section>
+
+  {% include 'seo/answer_faq.html' %}
 
   <!-- ============ Footer ============ -->
   <footer class="footer no-print">

@@ -1,0 +1,79 @@
+{
+  "slug": "download-vs-screen-recording",
+  "order": 3,
+  "title": "Downloading vs Screen Recording: What Actually Differs | HJ Video Downloader",
+  "description": "Downloading fetches the original file while screen recording makes a re-encoded copy. Compare quality, time cost, audio, DRM behaviour and subtitle extraction, plus a checklist for when you should not download at all.",
+  "keywords": ["download vs screen record", "recording instead of downloading", "why can't I download this video", "download quality vs recording", "how to save online video"],
+  "h1": "Downloading vs Screen Recording",
+  "sub": "One gives you the source file, the other a re-encoded copy",
+  "date": "2026-10-15",
+  "tldr": "Downloading pulls the original streams off the server, so quality matches the source, it takes as long as your bandwidth allows and the file works offline. Screen recording re-captures playback into a new file, capped by your screen resolution and frame rate, taking exactly as long as the video and losing quality. Download when you can; record only when you must.",
+  "toc": [
+    { "id": "mechanism", "text": "Fetching a file vs re-encoding" },
+    { "id": "quality", "text": "Quality and time" },
+    { "id": "limitation", "text": "Their respective limits" },
+    { "id": "not-download", "text": "When not to download" },
+    { "id": "decision", "text": "A one-line decision flow" }
+  ],
+  "matrix": {
+    "caption": "Downloading and screen recording compared",
+    "headers": ["Factor", "Downloading", "Screen recording"],
+    "rows": [
+      ["Quality ceiling", "Matches the source, up to 4K", "Capped by screen resolution, usually 1080p"],
+      ["Time required", "Depends on bandwidth, often fast", "You must play the whole thing"],
+      ["Audio", "Original track, can export MP3 alone", "Depends on system capture, often noisy"],
+      ["DRM", "Protected content cannot be downloaded", "Usually results in a black screen too"],
+      ["Subtitles", "Separate track, usable for AI summaries", "Baked into the picture, unusable"],
+      ["Best for", "Parseable content you have rights to", "When downloading is impossible, or you need the UI journey"]
+    ]
+  },
+  "sections": [
+    {
+      "id": "mechanism",
+      "heading": "Fetching a file vs re-encoding",
+      "paragraphs": [
+        "Downloading grabs the server's streams — usually picture and sound separately — and merges them, so what you get is the original file.",
+        "Recording captures whatever your screen shows and compresses it again. It is re-encoded output, which cannot exceed what was on screen."
+      ]
+    },
+    {
+      "id": "quality",
+      "heading": "Quality and time",
+      "paragraphs": [
+        "On quality, downloading can reach 4K where the platform offers it, while recording is capped by your display: on a 1080p screen the result never exceeds 1080p no matter how clean the source is.",
+        "On time the gap is starker. Downloading scales with bandwidth and takes minutes; recording requires full playback, so a one-hour video costs one hour, and any stutter or notification ruins the take."
+      ]
+    },
+    {
+      "id": "limitation",
+      "heading": "Their respective limits",
+      "paragraphs": [
+        "Downloading is limited from the outside: some platforms demand login (hence cookies), some restrict regions, and DRM-protected paid titles are blocked by design.",
+        "Recording is limited from within: capture needs OS permissions, DRM playback usually goes black or silent, and long sessions tax the CPU/GPU and drop frames."
+      ]
+    },
+    {
+      "id": "not-download",
+      "heading": "When not to download",
+      "paragraphs": [
+        "Never try to bypass platform restrictions for DRM-protected or paid-only material.",
+        "If what you need is a walkthrough — mouse movement, dialogs, the interface — downloading is useless; record instead.",
+        "And if the content is unlicensed, neither downloading nor recording is an appropriate way to keep it."
+      ]
+    },
+    {
+      "id": "decision",
+      "heading": "A one-line decision flow",
+      "paragraphs": [
+        "Ask three questions in order: do you have permission, is it DRM-protected, do you need the interaction captured. Yes/no/no means downloading is the right answer; any other answer means record it or leave it."
+      ]
+    }
+  ],
+  "pick": [
+    { "scenario": "Lectures, interviews, podcasts", "answer": "Download — best quality and fastest" },
+    { "scenario": "You are demoing a workflow", "answer": "Record — downloads cannot capture the UI" },
+    { "scenario": "Copyrighted or DRM material", "answer": "Neither is appropriate" },
+    { "scenario": "You only need the content", "answer": "Skip the file; read an AI summary" }
+  ],
+  "conclusion": "Downloads keep the source, recordings keep a copy. Download whenever possible — unless you need the process itself, or you were not allowed to save it at all."
+}

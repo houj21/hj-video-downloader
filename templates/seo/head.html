@@ -1,0 +1,37 @@
+<!-- ===== SEO Meta 标签（由 seo.py 统一生成，勿在此硬编码） ===== -->
+<title>{{ seo.title }}</title>
+<meta name="description" content="{{ seo.description }}">
+<meta name="keywords" content="{{ seo.keywords }}">
+<meta name="robots" content="{{ seo.robots }}">
+<link rel="canonical" href="{{ seo.canonical }}">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="format-detection" content="telephone=no">
+{% for alt in seo.alternate %}<link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.href }}">
+{% endfor %}
+
+<!-- ===== Open Graph（社交媒体分享） ===== -->
+<meta property="og:type" content="{{ seo.og_type }}">
+<meta property="og:title" content="{{ seo.og_title }}">
+<meta property="og:description" content="{{ seo.og_description }}">
+<meta property="og:image" content="{{ seo.og_image }}">
+<meta property="og:image:alt" content="{{ seo.og_image_alt }}">
+<meta property="og:url" content="{{ seo.og_url }}">
+<meta property="og:site_name" content="{{ seo.og_site_name }}">
+<meta property="og:locale" content="{{ seo.og_locale }}">
+
+<!-- ===== Twitter Card ===== -->
+<meta name="twitter:card" content="{{ seo.twitter_card }}">
+<meta name="twitter:title" content="{{ seo.og_title }}">
+<meta name="twitter:description" content="{{ seo.og_description }}">
+<meta name="twitter:image" content="{{ seo.og_image }}">
+<meta name="twitter:image:alt" content="{{ seo.og_image_alt }}">
+<meta name="twitter:site" content="{{ seo.twitter_site }}">
+
+<!-- ===== Schema.org itemprop ===== -->
+<meta itemprop="name" content="{{ seo.itemprop_name }}">
+<meta itemprop="description" content="{{ seo.itemprop_description }}">
+<meta itemprop="image" content="{{ seo.itemprop_image }}">
+
+<!-- ===== JSON-LD 结构化数据 ===== -->
+{% for block in seo.jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
+{% endfor %}

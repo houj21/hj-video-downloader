@@ -1,0 +1,26 @@
+<!-- ============ Footer（含平台落地页内链，提升新页面被发现的概率） ============ -->
+<footer class="footer">
+  <div class="container footer__inner">
+    <div>
+      <div class="footer__brand">HJ 视频下载</div>
+      <p class="footer__note">
+        本项目为学习与自用导向的开源实践，内核为 yt-dlp。请仅下载你拥有合法权利或已获授权的内容，
+        并遵守各平台服务条款与当地法律法规；请勿用于下载付费、受版权保护或未经授权的内容，
+        也不要高频请求以免触发平台风控。因使用本工具产生的任何风险由使用者自行承担。
+      </p>
+    </div>
+    <div class="footer__links">
+      <a href="/">视频下载</a>
+      <a href="/summarize">AI 总结</a>
+      <a href="/pricing">定价</a>
+      <a href="/faq">常见问题</a>
+      <a href="/guides">使用指南</a>
+    </div>
+  </div>
+  {% if footer_platforms %}
+  <div class="container footer__platforms">
+    <span class="footer__platforms-label">热门平台下载</span>
+    {% for item in footer_platforms %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}视频下载</a>{% endfor %}
+  </div>
+  {% endif %}
+</footer>

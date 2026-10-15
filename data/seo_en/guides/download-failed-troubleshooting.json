@@ -1,0 +1,67 @@
+{
+  "slug": "download-failed-troubleshooting",
+  "order": 2,
+  "title": "Video Download Failed? Causes and a Five-Minute Checklist | HJ Video Downloader",
+  "description": "Why downloads break — Unsupported URL, 403, 429, bot checks, missing audio, timeouts — with the fix for each, plus a recommended order of investigation and a quick error-code reference.",
+  "keywords": ["video download failed", "download error 403", "429 too many requests", "no sound after download", "video download timeout"],
+  "h1": "Video Download Failed? Start With This Checklist",
+  "sub": "Work through link, permission, environment, platform — in that order",
+  "date": "2026-10-15",
+  "toc": [
+    { "id": "order", "text": "The order that saves time" },
+    { "id": "link", "text": "Layer 1: the link" },
+    { "id": "permission", "text": "Layer 2: permission and throttling" },
+    { "id": "env", "text": "Layer 3: your environment" },
+    { "id": "platform", "text": "Layer 4: platform limits" },
+    { "id": "codes", "text": "Error quick reference" }
+  ],
+  "sections": [
+    {
+      "id": "order",
+      "heading": "The order that saves time",
+      "paragraphs": [
+        "Almost every failure falls into one of four buckets: a dirty link, missing access, a missing component in your environment, or a platform-side restriction. Checking them in that order resolves most cases within two steps and avoids the repeated retries that trigger throttling."
+      ]
+    },
+    {
+      "id": "link",
+      "heading": "Layer 1: the link",
+      "paragraphs": [
+        "The classic symptom is Unsupported URL or an empty result. Confirm you pasted the complete URL from the address bar rather than share text wrapped in hashtags and captions.",
+        "The other case is a video that has been deleted, made private or moved behind a membership. Those links are correctly formatted but simply have nothing behind them."
+      ]
+    },
+    {
+      "id": "permission",
+      "heading": "Layer 2: permission and throttling",
+      "paragraphs": [
+        "HTTP 403 and \"Sign in to confirm you're not a bot\" mean the platform wants a session. Drop a Netscape-format cookies file next to app.py (or set COOKIE_FILE) and restart; it is loaded automatically.",
+        "HTTP 429 means too many requests. Lower concurrency, pause a few minutes and split big batches into smaller chunks."
+      ]
+    },
+    {
+      "id": "env",
+      "heading": "Layer 3: your environment",
+      "paragraphs": [
+        "Silent video or unexpectedly low quality usually means ffmpeg is missing, so the streams were never merged. Install it, put it on PATH, retry.",
+        "Downloads that stall or time out are typically network jitter or rate limiting on the target side. Raise DOWNLOAD_TIMEOUT (default 15 minutes) if the file is genuinely large."
+      ]
+    },
+    {
+      "id": "platform",
+      "heading": "Layer 4: platform limits",
+      "paragraphs": [
+        "Sites occasionally change their signature parameters and everything breaks on the same day. yt-dlp is upgraded automatically at startup, which normally fixes it; set SKIP_YTDLP_UPDATE=1 offline and upgrade by hand.",
+        "DRM-protected paid content and live streams that are still running (as opposed to VOD archives) are out of scope."
+      ]
+    },
+    {
+      "id": "codes",
+      "heading": "Error quick reference",
+      "paragraphs": [
+        "Unsupported URL: check the link and whether the site is supported. Video unavailable: content was removed. Private video: author restricted it. HTTP 403: cookies needed or throttled. HTTP 429: too many requests, wait. Login required: configure cookies. Timeout: raise DOWNLOAD_TIMEOUT or try off-peak."
+      ]
+    }
+  ],
+  "conclusion": "If all four layers check out, report the exact message with the platform name and a reproducible public link — that is the fastest route to a fix."
+}

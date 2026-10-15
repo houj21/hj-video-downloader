@@ -1,0 +1,34 @@
+{
+  "slug": "bilibili",
+  "order": 1,
+  "name": "Bilibili",
+  "alias": "B站 / b23.tv",
+  "domains": ["bilibili.com", "b23.tv"],
+  "title": "Bilibili Video Downloader - Save Any BV Link Online | HJ Video Downloader",
+  "description": "Download Bilibili videos online: paste a BV link or b23.tv short link to parse it, choose 1080P+ / 1080P60 quality, extract MP3 audio, and batch-pack multi-part series into a zip. Works in any browser, including mobile.",
+  "keywords": ["bilibili video downloader", "download bilibili video", "bilibili to mp4", "bilibili mp3", "b23.tv download", "B站下载"],
+  "h1": "Bilibili Video Downloader",
+  "sub": "Paste a Bilibili link and save it to your device — high bitrate, multi-part series and MP3 included",
+  "intro": [
+    "Saving Bilibili videos is rarely hard because of the download itself; it is the messy input, capped quality and multi-part collections that waste your time. HJ Video Downloader handles all three: BV links, b23.tv short links and collections with multiple parts can all be pasted straight in.",
+    "Once parsed, every available quality is listed so you decide between maximum bitrate and a compact MP3. Everything runs in the browser — no client to install, and it works on your phone too."
+  ],
+  "caps": [
+    { "name": "High bitrate quality", "desc": "1080P+, 1080P60 and other premium tiers, keeping the quality the uploader published." },
+    { "name": "Multi-part and collections", "desc": "Collections expand automatically and batch downloads are zipped together." },
+    { "name": "Audio extraction", "desc": "Switch to MP3 to save just the audio — great for lectures, talks and covers." },
+    { "name": "Works without login", "desc": "Public videos parse directly; premium-only qualities need cookies configured." }
+  ],
+  "notes": [
+    "Members-only high bitrate tiers require a logged-in session: place cookies.txt on the server to unlock them.",
+    "Most Bilibili videos carry AI subtitles, so the same link can also feed an AI summary with timestamps.",
+    "Only download content you own or have permission to save, and respect Bilibili's terms."
+  ],
+  "faq": [
+    { "q": "Can b23.tv short links be downloaded?", "a": "Yes. The parser follows the short link to the real video address, so you can paste it directly." },
+    { "q": "Why do some qualities need cookies?", "a": "Premium-only bitrates are login-gated; the platform answers with a login-required message until a session cookie is present on the server." },
+    { "q": "Can I download a whole multi-part series?", "a": "Yes. Multi-part and collection links are expanded during parsing; use Download All to fetch them in order and zip them automatically." },
+    { "q": "How long are files kept?", "a": "Files are temporary on the server and cleaned up after about 30 minutes, so press Save to device as soon as the progress finishes." }
+  ],
+  "related": ["youtube", "douyin", "weibo"]
+}

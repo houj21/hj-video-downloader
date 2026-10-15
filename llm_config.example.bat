@@ -8,7 +8,8 @@ rem  默认平台：新疆幻城网安科技公益大模型安全网关 https://
 rem ============================================================
 
 rem ---- 必填：你的 API Key（网关控制台「令牌」页面创建，sk- 开头）----
-set LLM_API_KEY=sk-94yB1lRE7ZlYy8vmBsVAGUPBQDrmQ2feXSdjTcz7rzKl7KK8
+rem 安全提示：本文件会被 git 跟踪，切勿写入真实密钥；本地配置请复制为 llm_config.bat（已在 .gitignore 中）
+set LLM_API_KEY=sk-替换为你的密钥
 
 rem ---- 接口地址（OpenAI 兼容）----
 rem 幻城网安公益网关（默认）  https://api.hcnsec.cn/v1
@@ -26,6 +27,15 @@ set LLM_MODEL=auto
 
 rem ---- 可选：单次请求超时（秒），长视频可调大 ----
 set LLM_TIMEOUT=180
+
+rem ---- 可选：网关偶发断连（RemoteDisconnected）时的自动重试 ----
+rem 次数（默认 3）与退避基数秒数（默认 2，实际等待 2s/4s…）
+rem set LLM_RETRY_ATTEMPTS=3
+rem set LLM_RETRY_DELAY=2
+
+rem ---- 可选：超长字幕分块阈值与并发（默认 60000 字符 / 3 并发）----
+rem set SUMMARY_CHUNK_CHARS=60000
+rem set SUMMARY_MAX_CONCURRENCY=3
 
 echo.
 echo [HJ] 已配置模型：%LLM_MODEL% @ %LLM_BASE_URL%

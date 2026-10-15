@@ -1,0 +1,29 @@
+<!-- ===== 答案块（GEO）：定义式首句 + 要点列表 + 事实表格，便于 AI 抽取与引用 ===== -->
+{% if answer %}
+<section class="section section--tight" id="answer">
+  <div class="container">
+    <div class="seo-answer">
+      <h2 class="seo-answer__title">{{ answer.heading or ui.answer_heading_default }}</h2>
+      {% if answer.tldr %}<p class="seo-answer__tldr">{{ answer.tldr }}</p>{% endif %}
+
+      {% if answer.points %}
+      <h3 class="seo-answer__sub">{{ ui.answer_points_title }}</h3>
+      <ul class="seo-answer__points">
+        {% for point in answer.points %}<li>{{ point }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if answer.facts %}
+      <h3 class="seo-answer__sub">{{ ui.answer_facts_title }}</h3>
+      <table class="seo-facts">
+        <tbody>
+          {% for item in answer.facts %}
+          <tr><th scope="row">{{ item[0] }}</th><td>{{ item[1] }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}

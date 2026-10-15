@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = 'download' %}
+{% include 'seo/nav.html' %}
+
+<!-- ============ Hero：可直接使用下载功能 ============ -->
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="面包屑导航">
+      <a href="/">HJ 视频下载</a><span aria-hidden="true">›</span>
+      <a href="/#platforms">支持平台</a><span aria-hidden="true">›</span>
+      <span aria-current="page">{{ p.name }}</span>
+    </nav>
+
+    <div class="hero__badge"><i></i> 支持 {{ p.name }}（{{ p.alias }}）视频解析</div>
+    <h1 class="hero__title">{{ p.h1 }}</h1>
+    <p class="hero__sub">{{ p.sub }}</p>
+
+    {% include 'seo/download_widget.html' %}
+
+    <p class="hero__hint">支持域名：{% for d in p.domains %}<code>{{ d }}</code>{% if not loop.last %} / {% endif %}{% endfor %}，多个链接用空格分隔</p>
+    <div class="hero__history" id="history"></div>
+  </div>
+</section>
+
+<!-- ============ 下载结果（与首页一致的实时进度） ============ -->
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">解析结果</h2>
+        <p class="section__desc">选择清晰度后下载，音频模式可直接抽取 MP3</p>
+      </div>
+      <div class="switch" role="group" aria-label="下载格式">
+        <button class="switch__btn is-active" data-format="video">MP4 视频</button>
+        <button class="switch__btn" data-format="audio">MP3 音频</button>
+      </div>
+    </div>
+
+    <div class="video-grid" id="cards"></div>
+
+    <div class="download-all is-hidden" id="downloadAllBar">
+      <button class="btn btn--primary btn--block" id="downloadAllBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        全部下载
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight is-hidden" id="queueSection">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">下载队列</h2>
+        <p class="section__desc">任务在服务器后台执行，完成后点击「保存到本地」</p>
+      </div>
+    </div>
+    <div class="queue" id="queue" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+{% include 'seo/answer_block.html' %}
+
+<!-- ============ 为什么用它下载本站视频 ============ -->
+<section class="section" id="intro">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">为什么用 HJ 下载{{ p.name }}视频</h2>
+        <p class="section__desc">不用装客户端，网页端完成全部流程</p>
+      </div>
+      <a class="btn btn--ghost" href="/" title="回到视频下载首页">回到下载首页</a>
+    </div>
+    <div class="seo-prose">
+      {% for para in p.intro %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ 下载能力 ============ -->
+<section class="section section--tight" id="capabilities">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">{{ p.name }}下载支持哪些能力</h2>
+        <p class="section__desc">以下能力均基于当前页面即可使用</p>
+      </div>
+    </div>
+    <div class="platform-grid">
+      {% for cap in p.caps %}
+      <div class="platform-card">
+        <div class="platform-card__head"><i class="chip__dot"></i>{{ cap.name }}</div>
+        <p class="platform-card__desc">{{ cap.desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ 使用步骤 ============ -->
+<section class="section" id="steps">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">{{ p.name }}视频怎么保存到本地</h2>
+        <p class="section__desc">三步完成，全程不到一分钟</p>
+      </div>
+    </div>
+    <ol class="seo-steps">
+      {% for step in p.steps %}
+      <li>
+        <span class="seo-steps__num" aria-hidden="true">{{ loop.index }}</span>
+        <div>
+          <h3 class="seo-steps__title">{{ step.title }}</h3>
+          <p class="seo-steps__text">{{ step.text }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 注意事项 ============ -->
+<section class="section section--tight" id="notes">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">使用提示与注意事项</h2>
+        <p class="section__desc">遇到问题先看这里</p>
+      </div>
+      <a class="btn btn--ghost" href="/guides/download-failed-troubleshooting" title="视频下载失败排查手册">下载失败排查手册</a>
+    </div>
+    <ul class="seo-notes">
+      {% for note in p.notes %}<li>{{ note }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- ============ FAQ（与 JSON-LD FAQPage 对应，必须真实可见） ============ -->
+<section class="section" id="faq">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">{{ p.name }}视频下载常见问题</h2>
+        <p class="section__desc">没解决的可以到<a href="/faq" title="全部常见问题"> 常见问题汇总页 </a>继续看</p>
+      </div>
+    </div>
+    <div class="faq">
+      {% for item in p.faq %}
+      <details class="faq__item"{% if loop.first %} open{% endif %}>
+        <summary class="faq__q">{{ item.q }}</summary>
+        <p class="faq__a">{{ item.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ 相关平台内链 ============ -->
+{% if related %}
+<section class="section section--tight" id="related">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">其他平台视频下载</h2>
+        <p class="section__desc">同一套流程，换平台照样能用</p>
+      </div>
+    </div>
+    <div class="seo-links">
+      {% for item in related %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}视频下载</a>{% endfor %}
+      <a href="/summarize" title="用 AI 总结视频内容">AI 视频总结</a>
+      <a href="/guides" title="视频下载使用指南">下载教程合集</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ============ CTA ============ -->
+<section class="section section--tight">
+  <div class="container">
+    <div class="upsell">
+      <div class="upsell__inner">
+        <div>
+          <span class="upsell__tag">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.3 6.2H21l-5.2 3.9 1.9 6.4-5.7-4-5.7 4 1.9-6.4L3 8.7h6.7L12 2.5Z"/></svg>
+            免费可用
+          </span>
+          <h2 class="upsell__title">先看总结，<em>再决定要不要下载</em></h2>
+          <p class="upsell__desc">一小时的长视频，用 AI 视频总结读一遍字幕只要几秒，值得留存再回来下载，省下的时间更多。</p>
+          <div class="upsell__cta">
+            <a class="btn btn--primary" href="/summarize">立即体验 AI 总结</a>
+            <a class="btn btn--ghost" href="/guides/how-to-download-online-videos">看完整下载教程</a>
+          </div>
+        </div>
+        <div class="upsell__features">
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>1000+ 站点通用</div>
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>MP4 / MP3 双模式</div>
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>批量打包 zip</div>
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>手机浏览器可用</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% include 'seo/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

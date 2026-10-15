@@ -59,6 +59,9 @@ py -3.13 -m venv .venv
 | `SUMMARY_CHUNK_CHARS` | `60000` | 字幕超过该字符数才启用分块 map-reduce（默认整篇一次输入） |
 | `SUMMARY_MAX_CONCURRENCY` | `3` | 分块总结时的并发上限 |
 | `ASK_CONTEXT_CHARS` | `60000` | 追问时附带完整字幕的字符上限，超过则只带总结 |
+| `SEO_BASE_URL` | `http://127.0.0.1:8899` | 站点对外根地址，canonical / og:url / sitemap 都基于它，**上线务必改成正式域名** |
+| `SEO_LASTMOD` | `2026-10-15` | sitemap 中的 lastmod |
+| `SEO_OG_IMAGE` | `/static/img/og-cover.png` | OG 分享图路径 |
 
 ## 目录结构
 
@@ -71,13 +74,28 @@ py -3.13 -m venv .venv
 ├── templates/
 │   ├── index.html       # 首页：Hero 输入区、解析结果、下载队列、支持平台、会员区块
 │   ├── summarize.html   # AI 总结页：输入区、流水线进度、四段式结果、追问、导出
-│   └── pricing.html     # 定价页：套餐卡片、权益对比、FAQ
+│   ├── pricing.html     # 定价页：套餐卡片、权益对比、FAQ
+│   ├── landing.html     # 平台长尾落地页（SEO）
+│   ├── faq.html         # 常见问题页（SEO）
+│   ├── guides.html      # 使用指南索引（SEO）
+│   ├── guide.html       # 单篇指南文章（SEO）
+│   ├── compares.html    # 对比选型索引（GEO）
+│   ├── compare.html     # 单篇对比文章（GEO）
+│   ├── 404.html         # 404 页
+│   ├── en/              # 英文版模板（/en 前缀）
+│   └── seo/             # head / nav / footer / 答案块 / 下载组件的公共片段
+├── seo.py               # SEO/GEO 元信息引擎：TDK、OG、hreflang、JSON-LD、sitemap.xml
+├── seo_geo.py           # GEO：robots.txt（AI 爬虫放行）、llms.txt / llms-full.txt
+├── seo_content.py       # 读取 data/seo、data/seo_en 下的内容数据（多语言）
+├── data/seo/            # 中文内容数据：平台页 / 指南 / 对比 / FAQ / 答案块 / UI 文案
+├── data/seo_en/         # 英文内容数据（结构与中文一一对应，slug 保持一致）
 ├── static/
 │   ├── css/style.css    # 设计系统（#1777FF 主色 / #FFB020 金色强调 / 渐变 Hero / 打印样式）
 │   ├── js/app.js        # 解析、清晰度选择、批量下载、进度轮询、历史记录
 │   ├── js/summary.js    # 总结提交、进度轮询、结果渲染、思维导图、SSE 追问、导出
+│   ├── img/og-cover.png # OG 分享图 1200×630（另有 og-cover.svg 源文件）
 │   └── favicon.svg
-├── docs/                # 设计文档（AI 总结的竞品调研与方案设计，供溯源）
+├── docs/                # 设计文档（AI 总结的竞品调研与方案设计、SEO 上线清单）
 └── downloads/           # 下载暂存目录（自动清理，不入库）
 ```
 
@@ -166,6 +184,28 @@ http://127.0.0.1:8899/api/llm/models
 - 视频本体**不下载**，只拉取字幕轨，通常 3-10 秒即可拿到
 - 字幕与总结都在本机内存中处理，随任务过期（默认 1 小时）自动清理
 - 费用即大模型 token 费：1 小时视频约 1-2 万字，DeepSeek 量级单次约几分钱
+
+## GEO（让 AI 对话优先引用你）
+
+在 SEO 之上额外做了一层 AI 友好优化，详见 `docs/GEO优化说明.md`：
+
+- `/robots.txt` 显式放行全部主流 AI 爬虫（GPTBot、ClaudeBot、PerplexityBot、Google-Extended、Bytespider 等）
+- `/llms.txt` + `/llms-full.txt`（llmstxt.org 规范，中英各一套），内容从数据自动生成
+- 每个页面带「要点速览」答案块：一句话答案 + 要点 + 事实表，便于 AI 摘录
+- 4 篇客观对比/选型文章（`/compare/...`），覆盖 AI 高频提问形态
+- JSON-LD 增强：`sameAs` 实体关联、`speakable`、`dateModified`、TechArticle
+- 全站中英双语（`/en` 前缀）+ hreflang + sitemap 多语言标注
+
+## SEO 与收录
+
+SEO 相关的改造集中在 `seo.py` + `templates/seo/head.html` + `data/seo/`，不改变下载与总结的任何既有逻辑：
+
+- 全站页面的 TDK、canonical、robots、Open Graph、Twitter Card、JSON-LD 由 `seo.py` 统一生成
+- 自动生成 `/robots.txt` 与 `/sitemap.xml`（当前 17 条 URL）
+- 新增 8 个平台长尾落地页、4 篇使用指南、1 个常见问题页与 404 页
+- 页面文案放在 `data/seo/` 的 JSON 里，新增/修改不用改 Python 代码（改完重启服务）
+
+部署时只需要设置 `SEO_BASE_URL` 为正式域名，其余绝对地址自动生效。上线后的站长平台提交、百度主动推送等操作见 `docs/SEO上线提交清单.md`。
 
 ## 技术栈
 

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body itemscope itemtype="https://schema.org/Article">
+
+{% set nav_active = 'guides' %}
+{% include 'en/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="Breadcrumb">
+      <a href="/en">HJ Video Downloader</a><span aria-hidden="true">›</span>
+      <a href="/en/guides">Guides</a><span aria-hidden="true">›</span>
+      <span aria-current="page">{{ g.h1 }}</span>
+    </nav>
+    <h1 class="hero__title" itemprop="headline">{{ g.h1 }}</h1>
+    <p class="hero__sub" itemprop="description">{{ g.sub }}</p>
+    <p class="seo-meta">{{ ui.article_published }} <time datetime="{{ g.date }}">{{ g.date }}</time> · {{ ui.article_author }}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container seo-layout">
+    {% if g.toc %}
+    <aside class="seo-toc" aria-label="On this page">
+      <p class="seo-toc__title">{{ ui.guide_toc_title }}</p>
+      <ol>
+        {% for part in g.toc %}<li><a href="#{{ part.id }}">{{ part.text }}</a></li>{% endfor %}
+      </ol>
+      <a class="btn btn--primary seo-toc__cta" href="/en">Go download a video</a>
+    </aside>
+    {% endif %}
+
+    <article class="seo-prose">
+      {% for sec in g.sections %}
+      <h2 id="{{ sec.id }}">{{ sec.heading }}</h2>
+      {% for para in sec.paragraphs %}<p>{{ para }}</p>{% endfor %}
+      {% endfor %}
+
+      {% if g.conclusion %}
+      <h2 id="summary">{{ ui.guide_summary_heading }}</h2>
+      <p>{{ g.conclusion }}</p>
+      {% endif %}
+
+      <div class="seo-cta">
+        <p>Makes sense? Paste a link and try it now.</p>
+        <div class="seo-inline-links">
+          <a class="btn btn--primary" href="/en">Download a video</a>
+          <a class="btn btn--ghost" href="/en/summarize">Summarize a video</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+{% if related %}
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">{{ ui.related_heading }}</h2>
+      </div>
+    </div>
+    <div class="seo-grid">
+      {% for guide in related %}
+      <a class="seo-card" href="{{ guide.path }}" title="{{ guide.title }}">
+        <span class="seo-card__tag">{{ ui.guide_card_tag }}</span>
+        <h3 class="seo-card__title">{{ guide.h1 }}</h3>
+        <p class="seo-card__desc">{{ guide.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include 'en/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

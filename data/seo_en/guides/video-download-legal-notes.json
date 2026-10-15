@@ -1,0 +1,67 @@
+{
+  "slug": "video-download-legal-notes",
+  "order": 4,
+  "title": "Is Downloading Videos Allowed? Personal Use, Remix Culture and Copyright | HJ Video Downloader",
+  "description": "Where the line sits when saving online video: what is generally fine for offline personal use, what crosses into infringement, how fair use differs from derivative work, and four practical habits that lower your risk. Not legal advice.",
+  "keywords": ["is downloading videos legal", "video copyright", "fair use downloading", "derivative work copyright", "personal offline use"],
+  "h1": "Is Downloading Video Allowed? Four Boundaries",
+  "sub": "General information only — not legal advice. Your local law and each platform's terms govern.",
+  "date": "2026-10-15",
+  "toc": [
+    { "id": "core", "text": "The core question: rights before technique" },
+    { "id": "self-use", "text": "Personal offline use" },
+    { "id": "risk", "text": "High-risk categories" },
+    { "id": "reuse", "text": "Remixing and reposting" },
+    { "id": "todo", "text": "Four practical habits" },
+    { "id": "disclaimer", "text": "Disclaimer" }
+  ],
+  "sections": [
+    {
+      "id": "core",
+      "heading": "The core question: rights before technique",
+      "paragraphs": [
+        "Whether something is technically downloadable and whether you are allowed to download it are entirely different questions. Before pressing anything, ask: do you own this content, or has the author given you permission?",
+        "There is also a second layer — the platform's terms. Even where an action is lawful, it may breach the agreement you accepted, which can cost you the account."
+      ]
+    },
+    {
+      "id": "self-use",
+      "heading": "Personal offline use",
+      "paragraphs": [
+        "Content you uploaded yourself, internal material your team has access to, releases published under an open licence, and courses you purchased with explicit offline rights are normally fine to keep for your own watching.",
+        "The classic course-owner question — \"can I download the course I bought?\" — usually has terms that say offline viewing for you only. That is not permission to redistribute."
+      ]
+    },
+    {
+      "id": "risk",
+      "heading": "High-risk categories",
+      "paragraphs": [
+        "Paid films and series, members-only material, DRM-protected streams, other creators' videos in full, and any private content you have no rights to — none of these should be saved by circumventing platform restrictions.",
+        "Beyond copyright, bypassing a paywall usually breaks the terms of service outright and carries the more immediate consequence of losing access."
+      ]
+    },
+    {
+      "id": "reuse",
+      "heading": "Remixing and reposting",
+      "paragraphs": [
+        "What you do after downloading often matters more than how you got it. Re-editing, reuploading, commercial reuse and uncredited sharing all carry far more risk than private offline study.",
+        "Even where fair use plausibly applies, keep the author's name and source link, quote only what you need, and avoid substituting for the original work in the market."
+      ]
+    },
+    {
+      "id": "todo",
+      "heading": "Four practical habits",
+      "paragraphs": [
+        "Prefer official download buttons or permission granted by the creator. Check the video description and profile for licence statements. Keep content private rather than redistributing it, and always credit the source. Finally, throttle your requests so you do not trip anti-bot systems."
+      ]
+    },
+    {
+      "id": "disclaimer",
+      "heading": "Disclaimer",
+      "paragraphs": [
+        "HJ Video Downloader is an open-source practice project aimed at learning and self-use. Only download material you own or are licensed to save, follow platform rules and local law, and accept responsibility for your own use."
+      ]
+    }
+  ],
+  "conclusion": "Those four boundaries cover most situations. When in doubt, asking the creator for permission is always the safest move."
+}

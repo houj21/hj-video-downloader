@@ -1,0 +1,34 @@
+{
+  "slug": "weibo",
+  "order": 5,
+  "name": "Weibo",
+  "alias": "新浪微博",
+  "domains": ["weibo.com", "video.weibo.com"],
+  "title": "Weibo Video Downloader - Save Weibo and Miaopai Videos | HJ Video Downloader",
+  "description": "Download Weibo videos by pasting the post link: the parser resolves reposts to the real video source, offering quality tiers, MP3 extraction and batch packaging — all in the browser, no plugin.",
+  "keywords": ["weibo video downloader", "download weibo video", "miaopai video download", "save weibo video", "微博视频下载"],
+  "h1": "Weibo Video Downloader",
+  "sub": "Paste a Weibo link and save the underlying video — reposts included",
+  "intro": [
+    "Weibo videos are usually reposted, sourced from Miaopai, native players or third-party embeds, so the link you copy is often loaded with parameters. HJ Video Downloader handles these messy URLs and resolves them back to the actual video source.",
+    "Trending clips and creator originals disappear quickly. When something is worth keeping, parsing and saving it right away is the safer move."
+  ],
+  "caps": [
+    { "name": "Repost resolution", "desc": "Looks through repost layers to the genuine video source." },
+    { "name": "Quality tiers", "desc": "Every quality the source offers is listed for you to choose." },
+    { "name": "Audio extraction", "desc": "Export speech and ambient audio with MP3 mode." },
+    { "name": "Batch processing", "desc": "Several Weibo links at once, packaged when done." }
+  ],
+  "notes": [
+    "Some Weibo videos only play in the app — open the post in a browser first and copy the address bar.",
+    "Keep other people's work for private use; ask before any kind of redistribution.",
+    "Bulk parsing in quick succession can trigger anti-bot systems, so batch gradually."
+  ],
+  "faq": [
+    { "q": "App links fail to parse. What now?", "a": "App sharing produces short links or codes. Open the post in a browser and copy the full URL instead." },
+    { "q": "Why are there only a couple of quality options?", "a": "Options mirror what exists upstream. A low-resolution upload cannot be upgraded to something better." },
+    { "q": "Can I batch-save one blogger's videos?", "a": "Yes. Paste several post links separated by spaces, parse, then Download All — they arrive as a zip." },
+    { "q": "How long are files kept?", "a": "Temporarily on the server, cleaned up after roughly 30 minutes. Save to device promptly." }
+  ],
+  "related": ["douyin", "xiaohongshu", "kuaishou"]
+}

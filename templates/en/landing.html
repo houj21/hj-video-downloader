@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include 'seo/head.html' %}
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+{% set nav_active = 'download' %}
+{% include 'en/nav.html' %}
+
+<section class="hero hero--short">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <nav class="seo-crumbs" aria-label="Breadcrumb">
+      <a href="/en">HJ Video Downloader</a><span aria-hidden="true">›</span>
+      <a href="/#platforms">Supported sites</a><span aria-hidden="true">›</span>
+      <span aria-current="page">{{ p.name }}</span>
+    </nav>
+
+    <div class="hero__badge"><i></i> {{ p.name }} ({{ p.alias }}) supported</div>
+    <h1 class="hero__title">{{ p.h1 }}</h1>
+    <p class="hero__sub">{{ p.sub }}</p>
+
+    <div class="searchbar">
+      <span class="searchbar__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0-7.07 7.07l1.71-1.71"/>
+        </svg>
+      </span>
+      <input class="searchbar__input" id="urlInput" type="text"
+             placeholder="Paste a video link, separate multiple links with spaces"
+             aria-label="Video link" autocomplete="off">
+      <button class="searchbar__btn" id="parseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span>Parse</span>
+      </button>
+    </div>
+
+    <p class="hero__hint">Domains: {% for d in p.domains %}<code>{{ d }}</code>{% if not loop.last %} / {% endif %}{% endfor %} — separate multiple links with spaces</p>
+    <div class="hero__history" id="history"></div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Parse results</h2>
+        <p class="section__desc">Pick a quality to download, or switch to MP3 for audio only</p>
+      </div>
+      <div class="switch" role="group" aria-label="Download format">
+        <button class="switch__btn is-active" data-format="video">MP4 video</button>
+        <button class="switch__btn" data-format="audio">MP3 audio</button>
+      </div>
+    </div>
+    <div class="video-grid" id="cards"></div>
+    <div class="download-all is-hidden" id="downloadAllBar">
+      <button class="btn btn--primary btn--block" id="downloadAllBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download all
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight is-hidden" id="queueSection">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Download queue</h2>
+        <p class="section__desc">Jobs run on the server; click Save to device when they finish</p>
+      </div>
+    </div>
+    <div class="queue" id="queue" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+{% include 'seo/answer_block.html' %}
+
+<section class="section" id="intro">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Why use HJ for {{ p.name }} downloads</h2>
+        <p class="section__desc">Everything happens in the browser</p>
+      </div>
+      <a class="btn btn--ghost" href="/en">Back to the downloader</a>
+    </div>
+    <div class="seo-prose">
+      {% for para in p.intro %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight" id="capabilities">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">What works on {{ p.name }}</h2>
+      </div>
+    </div>
+    <div class="platform-grid">
+      {% for cap in p.caps %}
+      <div class="platform-card">
+        <div class="platform-card__head"><i class="chip__dot"></i>{{ cap.name }}</div>
+        <p class="platform-card__desc">{{ cap.desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="steps">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">How to save {{ p.name }} videos</h2>
+        <p class="section__desc">Three steps, about a minute</p>
+      </div>
+    </div>
+    <ol class="seo-steps">
+      {% for step in p.steps %}
+      <li>
+        <span class="seo-steps__num" aria-hidden="true">{{ loop.index }}</span>
+        <div>
+          <h3 class="seo-steps__title">{{ step.title }}</h3>
+          <p class="seo-steps__text">{{ step.text }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<section class="section section--tight" id="notes">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Notes and caveats</h2>
+      </div>
+      <a class="btn btn--ghost" href="/en/guides/download-failed-troubleshooting">Troubleshooting guide</a>
+    </div>
+    <ul class="seo-notes">
+      {% for note in p.notes %}<li>{{ note }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">{{ p.name }} download FAQ</h2>
+        <p class="section__desc">More answers in the <a href="/en/faq">full FAQ</a></p>
+      </div>
+    </div>
+    <div class="faq">
+      {% for item in p.faq %}
+      <details class="faq__item"{% if loop.first %} open{% endif %}>
+        <summary class="faq__q">{{ item.q }}</summary>
+        <p class="faq__a">{{ item.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% if related %}
+<section class="section section--tight" id="related">
+  <div class="container">
+    <div class="section__head">
+      <div>
+        <h2 class="section__title">Other platforms</h2>
+        <p class="section__desc">The same flow works everywhere</p>
+      </div>
+    </div>
+    <div class="seo-links">
+      {% for item in related %}<a href="{{ item.path }}" title="{{ item.title }}">{{ item.name }}</a>{% endfor %}
+      <a href="/en/summarize">AI video summarizer</a>
+      <a href="/en/guides">Downloading guides</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="upsell">
+      <div class="upsell__inner">
+        <div>
+          <span class="upsell__tag">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.3 6.2H21l-5.2 3.9 1.9 6.4-5.7-4-5.7 4 1.9-6.4L3 8.7h6.7L12 2.5Z"/></svg>
+            Free to start
+          </span>
+          <h2 class="upsell__title">Skim it first, <em>download it second</em></h2>
+          <p class="upsell__desc">A long video takes seconds to summarize, so you can decide before spending any bandwidth on the full file.</p>
+          <div class="upsell__cta">
+            <a class="btn btn--primary" href="/en/summarize">Try the AI summarizer</a>
+            <a class="btn btn--ghost" href="/en/guides/how-to-download-online-videos">Read the full walkthrough</a>
+          </div>
+        </div>
+        <div class="upsell__features">
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>1000+ sites</div>
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>MP4 / MP3</div>
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Batch zip</div>
+          <div class="upsell__feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Works on mobile</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% include 'en/footer.html' %}
+
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
