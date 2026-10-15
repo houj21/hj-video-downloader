@@ -92,7 +92,43 @@
     </div>
   </section>
 
-  {% include 'seo/answer_block.html' %}
+  <!-- ============ Results ============ -->
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <div>
+          <h2 class="section__title">解析结果</h2>
+          <p class="section__desc">选择清晰度后下载，音频模式可直接抽取 MP3</p>
+        </div>
+        <div class="switch" role="group" aria-label="下载格式">
+          <button class="switch__btn is-active" data-format="video">MP4 视频</button>
+          <button class="switch__btn" data-format="audio">MP3 音频</button>
+        </div>
+      </div>
+
+      <div class="video-grid" id="cards"></div>
+
+      <div class="download-all is-hidden" id="downloadAllBar">
+        <button class="btn btn--primary btn--block" id="downloadAllBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          全部下载
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Download queue ============ -->
+  <section class="section section--tight is-hidden" id="queueSection">
+    <div class="container">
+      <div class="section__head">
+        <div>
+          <h2 class="section__title">下载队列</h2>
+          <p class="section__desc">任务在服务器后台执行，完成后点击「保存到本地」</p>
+        </div>
+      </div>
+      <div class="queue" id="queue" role="status" aria-live="polite"></div>
+    </div>
+  </section>
 
   <!-- ============ Supported platforms ============ -->
   <section class="section" id="platforms">
@@ -104,7 +140,6 @@
         </div>
         <a class="btn btn--ghost" href="https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md" target="_blank" rel="noopener">完整支持列表</a>
       </div>
-
       <div class="platform-grid">
         <div class="platform-card">
           <div class="platform-card__head"><i class="chip__dot chip__dot--yt"></i>YouTube</div>
@@ -175,43 +210,7 @@
     </div>
   </section>
 
-  <!-- ============ Results ============ -->
-  <section class="section">
-    <div class="container">
-      <div class="section__head">
-        <div>
-          <h2 class="section__title">解析结果</h2>
-          <p class="section__desc">选择清晰度后下载，音频模式可直接抽取 MP3</p>
-        </div>
-        <div class="switch" role="group" aria-label="下载格式">
-          <button class="switch__btn is-active" data-format="video">MP4 视频</button>
-          <button class="switch__btn" data-format="audio">MP3 音频</button>
-        </div>
-      </div>
-
-      <div class="video-grid" id="cards"></div>
-
-      <div class="download-all is-hidden" id="downloadAllBar">
-        <button class="btn btn--primary btn--block" id="downloadAllBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          全部下载
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ Download queue ============ -->
-  <section class="section section--tight is-hidden" id="queueSection">
-    <div class="container">
-      <div class="section__head">
-        <div>
-          <h2 class="section__title">下载队列</h2>
-          <p class="section__desc">任务在服务器后台执行，完成后点击「保存到本地」</p>
-        </div>
-      </div>
-      <div class="queue" id="queue" role="status" aria-live="polite"></div>
-    </div>
-  </section>
+  {% include 'seo/answer_block.html' %}
 
   <!-- ============ Upsell ============ -->
   <section class="section">
