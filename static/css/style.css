@@ -821,7 +821,10 @@ img { display: block; max-width: 100%; }
 /* ---------- Pricing: plan cards ---------- */
 .plans {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* 两列布局并整体居中（团队版隐藏后仅剩免费版/专业版；恢复三列时改回 repeat(3) 并去掉 max-width） */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 780px;
+  margin: 0 auto;
   gap: 22px;
   align-items: start;
 }

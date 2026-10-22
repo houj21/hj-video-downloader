@@ -19,3 +19,7 @@ downloads/
 __pycache__/
 *.pyc
 .codebuddy/
+
+# 本地运行日志
+.server.log
+.server.err.log
