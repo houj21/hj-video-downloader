@@ -461,12 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const burger = $('#burger');
   if (burger) burger.addEventListener('click', toggleMenu);
 
-  // pricing page: payment not wired yet
-  document.querySelectorAll('[data-coming-soon]').forEach((b) => {
-    b.addEventListener('click', () => {
-      toast(`${b.dataset.comingSoon}支付通道开发中，敬请期待`, 'error');
-    });
-  });
+  // 注：付费按钮已由 membership.js 接管（真实 Stripe 下单），此处不再拦截。
 
   if (urlInput) {
     renderHistory();

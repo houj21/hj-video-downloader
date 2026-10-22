@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>支付结果 · HJ 视频下载</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  {% include 'member_nav.html' %}
+
+  <section class="section">
+    <div class="container">
+      <div class="pay" id="payRoot"
+           data-order="{{ order_id }}"
+           data-canceled="{{ '1' if canceled else '0' }}">
+
+        <div class="pay-card" id="payState" data-state="pending">
+          <div class="pay-icon" aria-hidden="true">
+            <span class="pay-icon__spin"></span>
+            <svg class="pay-icon__ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg class="pay-icon__warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+          </div>
+
+          <h1 class="pay-title" id="payTitle">正在确认你的支付…</h1>
+          <p class="pay-desc" id="payDesc">Stripe 正在把支付结果同步回来，通常几秒内完成</p>
+          <p class="pay-detail" id="payDetail" hidden></p>
+
+          <ul class="pay-perks">
+            <li>AI 视频总结与追问</li>
+            <li>字幕文本查看 · TXT / SRT 下载</li>
+            <li>思维导图 PNG / SVG 导出</li>
+          </ul>
+
+          <div class="pay-cta">
+            <a class="btn btn--primary" href="/summarize">立即体验 AI 视频总结</a>
+            <a class="btn btn--ghost" href="/">返回首页</a>
+          </div>
+
+          <p class="pay-note">
+            支付由 Stripe 处理，卡号不会经过本站。若长时间未显示开通结果，请携带订单号后 8 位联系站长。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% include 'member_footer.html' %}
+
+</body>
+</html>

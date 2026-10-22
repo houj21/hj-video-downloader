@@ -6,16 +6,20 @@ import glob
 import json
 import shutil
 import sys
+import secrets
 import zipfile
 import subprocess
 import threading
+from functools import wraps
 from flask import (Flask, request, jsonify, send_file, render_template, Response,
-                   stream_with_context, abort, has_request_context)
+                   stream_with_context, abort, has_request_context, session)
 
 import seo
 import seo_content
 import seo_geo
 import summarizer
+import membership
+import payments
 
 app = Flask(__name__)
 
@@ -70,6 +74,104 @@ def child_env():
 
 # 把项目内已验证的 yt-dlp 工具函数注入总结模块（避免循环导入）
 summarizer.configure(ytdlp=YTDLP, cookie_args=cookie_args, child_env=child_env)
+
+
+# ==================== 会员账号与支付（会话 / CSRF / 鉴权） ====================
+
+# 会话签名密钥：务必由环境变量注入。缺失时生成一次性随机值（重启后需重新登录），
+# 绝不硬编码固定串——历史教训见 docs/AI视频总结-二期设计文档.md §16.3。
+APP_SECRET_KEY = (os.environ.get("APP_SECRET_KEY") or "").strip()
+SECRET_FROM_ENV = bool(APP_SECRET_KEY)
+if not SECRET_FROM_ENV:
+    APP_SECRET_KEY = secrets.token_hex(32)
+
+app.secret_key = APP_SECRET_KEY
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,          # 禁止 JS 读取登录 Cookie
+    SESSION_COOKIE_SAMESITE="Lax",         # 挡住大部分跨站请求
+    SESSION_COOKIE_SECURE=False,           # 本地 http 开发；站点上 HTTPS 后改为 True
+)
+
+membership.init_db()
+
+# 只对这些「改动账号状态」的接口做 CSRF 校验。
+# 其余 POST 接口要求 application/json 内容类型，跨站表单无法伪造（需预检），
+# 因此不必强制带 token，避免破坏既有前端调用。
+CSRF_PROTECTED = ("/api/auth/register", "/api/auth/login",
+                  "/api/auth/logout", "/api/checkout")
+
+
+def current_user():
+    """当前登录用户 dict，未登录返回 None。"""
+    uid = session.get("uid")
+    if not uid:
+        return None
+    return membership.get_user(uid)
+
+
+def _me_payload(user):
+    if not user:
+        return {"logged_in": False, "is_member": False}
+    return {
+        "logged_in": True,
+        "email": user["email"],
+        "display": user["email"].split("@")[0],
+        "is_member": membership.is_member(user["id"]),
+    }
+
+
+def public_base_url():
+    """站点外网地址，用于拼接 Stripe 的 success_url / cancel_url。"""
+    return (os.environ.get("PUBLIC_BASE_URL") or "").strip() or request.host_url.rstrip("/")
+
+
+@app.before_request
+def csrf_guard():
+    """播种并校验 CSRF Token（双提交：Cookie 会话 + 自定义头）。"""
+    if not session.get("csrf"):
+        session["csrf"] = secrets.token_urlsafe(32)
+    if request.method != "POST":
+        return
+    path = request.path
+    if path.startswith("/api/stripe/"):     # Webhook 靠 Stripe 签名而非 CSRF
+        return
+    if path not in CSRF_PROTECTED:
+        return
+    if request.headers.get("X-CSRF-Token", "") != session.get("csrf", ""):
+        return jsonify({"error": "页面已过期，请刷新后重试", "code": "csrf_failed"}), 403
+
+
+@app.context_processor
+def inject_account():
+    """为所有模板注入登录态与 CSRF Token（不触碰既有 inject_seo_meta）。"""
+    return {
+        "csrf_token": session.get("csrf", ""),
+        "me": _me_payload(current_user()),
+        "payments_enabled": payments.configured(),
+    }
+
+
+def membership_required(view):
+    """终身会员鉴权装饰器。未登录 401，已登录非会员 403（前端据此渲染升级卡片）。"""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        user = current_user()
+        if not user:
+            return jsonify({
+                "error": "该功能为终身会员专属，请先登录",
+                "code": "login_required",
+                "upgrade_url": "/pricing",
+                "logged_in": False,
+            }), 401
+        if not membership.is_member(user["id"]):
+            return jsonify({
+                "error": "此功能为终身会员专属",
+                "code": "membership_required",
+                "upgrade_url": "/pricing",
+                "logged_in": True,
+            }), 403
+        return view(*args, **kwargs)
+    return wrapped
 
 
 def progress_cmd(cmd):
@@ -669,6 +771,7 @@ def llm_models():
 
 
 @app.route("/api/summarize", methods=["POST"])
+@membership_required
 def start_summary():
     data = request.json or {}
     url = (data.get("url") or "").strip()
@@ -792,6 +895,7 @@ def summary_export():
 
 
 @app.route("/api/summary/subtitle/<job_id>")
+@membership_required
 def summary_subtitle(job_id):
     """字幕文本 Tab 的数据源：懒加载时间轴，避免把上千条字幕塞进 status 轮询。"""
     job = jobs.get(job_id)
@@ -808,6 +912,7 @@ def summary_subtitle(job_id):
 
 
 @app.route("/api/summary/subtitle", methods=["POST"])
+@membership_required
 def summary_subtitle_download():
     """字幕下载：txt（速读）/ srt（带时间轴，可导入播放器）。"""
     data = request.json or {}
@@ -830,6 +935,255 @@ def summary_subtitle_download():
         mimetype="text/plain; charset=utf-8",
         headers={"Content-Disposition": summarizer.content_disposition(f"{base}字幕.{fmt}")},
     )
+
+
+# ==================== 会员账号 / 下单 / 支付回调 ====================
+
+_auth_hits = {}
+_auth_lock = threading.Lock()
+
+
+def rate_limited(key, limit=10, window=60):
+    """极简内存限流（按 IP / 用户），只用于注册、登录、下单，防脚本刷接口。"""
+    now = time.time()
+    with _auth_lock:
+        if len(_auth_hits) > 5000:          # 兜底防内存膨胀
+            _auth_hits.clear()
+        bucket = [t for t in _auth_hits.get(key, []) if now - t < window]
+        if len(bucket) >= limit:
+            _auth_hits[key] = bucket
+            return True
+        bucket.append(now)
+        _auth_hits[key] = bucket
+        return False
+
+
+def client_ip():
+    return (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
+
+
+def _safe_next(raw):
+    """登录后跳转地址：只允许站内相对路径，挡掉 open redirect。"""
+    if not raw or not raw.startswith("/") or raw.startswith("//"):
+        return ""
+    return raw
+
+
+def _obj_get(obj, key, default=None):
+    """兼容 stripe 对象与普通 dict 的字段读取。"""
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    value = getattr(obj, key, default)
+    return default if value is None else value
+
+
+@app.route("/account")
+def account_page():
+    return render_template("account.html", next_url=_safe_next(request.args.get("next") or ""))
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def auth_register():
+    if rate_limited("reg:" + client_ip(), limit=8):
+        return jsonify({"error": "操作过于频繁，请稍后再试"}), 429
+    data = request.get_json(silent=True) or {}
+    try:
+        user = membership.create_user(data.get("email", ""), data.get("password", ""))
+    except membership.MembershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    session.clear()                          # 防会话固定：登录成功即换新会话
+    session["uid"] = user["id"]
+    session["csrf"] = secrets.token_urlsafe(32)
+    return jsonify({"ok": True, "email": user["email"], "is_member": False})
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def auth_login():
+    if rate_limited("login:" + client_ip(), limit=10):
+        return jsonify({"error": "尝试过于频繁，请稍后再试"}), 429
+    data = request.get_json(silent=True) or {}
+    try:
+        user = membership.verify_user(data.get("email", ""), data.get("password", ""))
+    except membership.MembershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    session.clear()
+    session["uid"] = user["id"]
+    session["csrf"] = secrets.token_urlsafe(32)
+    return jsonify({
+        "ok": True,
+        "email": user["email"],
+        "is_member": membership.is_member(user["id"]),
+    })
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def auth_logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/me")
+def api_me():
+    return jsonify(_me_payload(current_user()))
+
+
+@app.route("/api/checkout", methods=["POST"])
+def api_checkout():
+    """创建（或复用）Checkout Session。重复点击只会拿到同一个收银台链接。"""
+    user = current_user()
+    if not user:
+        return jsonify({"error": "请先登录后再开通会员", "code": "login_required",
+                        "login_url": "/account"}), 401
+    if rate_limited("checkout:" + user["id"], limit=10):
+        return jsonify({"error": "操作过于频繁，请稍后再试"}), 429
+
+    data = request.get_json(silent=True) or {}
+    try:
+        plan = payments.get_plan(data.get("plan", ""))
+    except membership.MembershipError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if not payments.configured():
+        return jsonify({"error": "支付通道尚未配置，请联系站长"}), 503
+
+    # 幂等第一层：已付过款就不要再建单
+    if membership.has_paid_order(user["id"], plan["code"]) or membership.is_member(user["id"]):
+        return jsonify({"error": "你已是终身会员，无需重复购买", "code": "already_member"}), 409
+
+    order = membership.find_reusable_order(user["id"], plan["code"])
+    if not order:
+        order_id = membership.create_order(user["id"], plan["code"],
+                                          plan["amount"], plan["currency"])
+        order = membership.get_order(order_id)
+
+    try:
+        session_id, checkout_url = payments.ensure_checkout_session(
+            order, user["email"], public_base_url())
+    except payments.PaymentsError as exc:
+        return jsonify({"error": str(exc)}), 502
+
+    if not checkout_url:
+        return jsonify({"error": "未能获取支付链接，请稍后重试"}), 502
+    if not order.get("stripe_session_id"):
+        membership.attach_session(order["id"], session_id, checkout_url)
+    return jsonify({"order_id": order["id"], "checkout_url": checkout_url})
+
+
+@app.route("/api/order/<order_id>")
+def api_order(order_id):
+    """订单状态查询（成功页轮询）。必须校验订单归属，杜绝越权开通。"""
+    user = current_user()
+    if not user:
+        return jsonify({"error": "请先登录", "code": "login_required"}), 401
+    if not membership.order_belongs_to(order_id, user["id"]):
+        return jsonify({"error": "订单不存在"}), 404
+
+    order = membership.get_order(order_id)
+
+    # 兜底同步：Webhook 可能因本地未开隧道而缺席，浏览器可主动向 Stripe 查询一次
+    if (order["status"] == membership.ORDER_PENDING
+            and order.get("stripe_session_id")
+            and request.args.get("sync") == "1"):
+        try:
+            stripe_session = payments.retrieve_session(order["stripe_session_id"])
+            if (_obj_get(stripe_session, "payment_status") == "paid"
+                    and payments.session_amount_matches(stripe_session, order)):
+                membership.try_mark_paid(
+                    order["id"],
+                    order["stripe_session_id"],
+                    _payment_intent_id(_obj_get(stripe_session, "payment_intent")),
+                    None,
+                )
+                order = membership.get_order(order_id)
+        except payments.PaymentsError:
+            pass                                  # 查询失败不影响前端继续轮询
+
+    return jsonify({
+        "order_id": order["id"],
+        "status": order["status"],
+        "plan": order["plan"],
+        "amount": order["amount"],
+        "currency": order["currency"],
+        "paid": order["status"] == membership.ORDER_PAID,
+        "is_member": membership.is_member(user["id"]),
+    })
+
+
+def _payment_intent_id(value):
+    if not value:
+        return None
+    if isinstance(value, str):
+        return value
+    return _obj_get(value, "id")
+
+
+@app.route("/api/stripe/webhook", methods=["POST"])
+def stripe_webhook():
+    """Stripe 回调：验签 → 事件去重 → 事务发货。是会员生效的唯一可信来源。"""
+    if not payments.webhook_configured():
+        return jsonify({"error": "webhook not configured"}), 503
+
+    raw = request.get_data()                  # 必须是原始字节，不能重新序列化
+    signature = request.headers.get("Stripe-Signature", "")
+    try:
+        event = payments.parse_webhook(raw, signature)
+    except payments.PaymentsError as exc:
+        print(f"[HJ][stripe] Webhook 拒绝：{exc}")
+        return jsonify({"error": "invalid signature"}), 400
+
+    event_type = _obj_get(event, "type", "")
+    event_id = _obj_get(event, "id", "")
+    if event_type not in membership.SUPPORTED_EVENTS:
+        return jsonify({"received": True, "ignored": True})
+
+    try:
+        stripe_session = _obj_get(_obj_get(event, "data", {}), "object")
+        session_id = _obj_get(stripe_session, "id", "")
+        order = membership.get_order_by_session(session_id)
+        if not order:
+            # 极端竞态：Session 已建但 session_id 尚未回写库，用 client_reference_id 兜底
+            order = membership.get_order(_obj_get(stripe_session, "client_reference_id", ""))
+            if order and not order.get("stripe_session_id"):
+                membership.attach_session(order["id"], session_id,
+                                          _obj_get(stripe_session, "url"))
+        if not order:
+            return jsonify({"received": True, "unknown_order": True})
+
+        if event_type in ("checkout.session.expired", "checkout.session.async_payment_failed"):
+            membership.mark_expired(order["id"])
+            return jsonify({"received": True})
+
+        # 金额二次校验：后台价格配错时宁可不发货，也不产生错账
+        if not payments.session_amount_matches(stripe_session, order):
+            print(f"[HJ][stripe] 金额不匹配，拒绝发货 order={order['id']} "
+                  f"expected={order['amount']} got={_obj_get(stripe_session, 'amount_total')}")
+            return jsonify({"received": True, "amount_mismatch": True})
+
+        granted = membership.try_mark_paid(
+            order["id"],
+            session_id,
+            _payment_intent_id(_obj_get(stripe_session, "payment_intent")),
+            event_id,
+        )
+        print(f"[HJ][stripe] {event_type} order={order['id']} 首次发货={granted}")
+        return jsonify({"received": True, "granted": granted})
+    except Exception as exc:                  # 返回 5xx 让 Stripe 重试，幂等由上面保证
+        print(f"[HJ][stripe] Webhook 处理异常：{type(exc).__name__}")
+        return jsonify({"error": "webhook handler failed"}), 500
+
+
+@app.route("/pay/success")
+def pay_success():
+    return render_template("pay_success.html", order_id=request.args.get("order") or "")
+
+
+@app.route("/pay/cancel")
+def pay_cancel():
+    return render_template("pay_success.html", order_id="", canceled=True)
 
 
 def register_platform_pages():
@@ -880,6 +1234,15 @@ def update_ytdlp():
 
 
 if __name__ == "__main__":
+    # 输出编码兜底：挂真实控制台时 Python 走 Unicode 通道没问题，
+    # 但一旦 stdout 被重定向到文件/管道（后台服务、日志采集），Windows 默认回退到 GBK，
+    # 日志里的 ¥、中文会直接 UnicodeEncodeError 让服务起不来。
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
     port = int(os.environ.get("PORT", 8899))
     host = os.environ.get("HOST", "127.0.0.1")
     update_ytdlp()
@@ -890,5 +1253,17 @@ if __name__ == "__main__":
         print(f"[HJ] AI 总结已启用: {summarizer.LLM_MODEL} @ {summarizer.LLM_BASE_URL}")
     else:
         print("[HJ] AI 总结未配置 LLM_API_KEY，总结页将显示配置指引（参考 llm_config.example.bat）")
+    print(f"[HJ] 会员数据库: {membership.DB_PATH}")
+    if not SECRET_FROM_ENV:
+        print("[HJ] 警告：未设置 APP_SECRET_KEY，本次使用临时随机密钥（重启后需重新登录）")
+    if payments.configured():
+        print(f"[HJ] Stripe 支付已启用：终身会员 ¥{payments.AMOUNT / 100:.2f} "
+              f"{payments.CURRENCY.upper()}（{'测试密钥' if payments.SECRET_KEY.startswith('sk_test_') else '生产密钥'}）")
+        if not payments.webhook_configured():
+            print("[HJ] 警告：未配置 STRIPE_WEBHOOK_SECRET，支付回调将无法验签（会员不会自动开通）")
+        else:
+            print("[HJ] Webhook 签名密钥已配置，回调地址：/api/stripe/webhook")
+    else:
+        print("[HJ] Stripe 未配置：定价页会提示支付通道未开启（参考 stripe_config.example.bat）")
     print(f"[HJ] 服务已启动: http://{host}:{port}")
     app.run(host=host, port=port)

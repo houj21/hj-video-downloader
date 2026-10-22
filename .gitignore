@@ -23,3 +23,15 @@ __pycache__/
 # 本地运行日志
 .server.log
 .server.err.log
+.boot.log
+.boot.err
+.smoke.log
+.smoke.err
+
+# 本地支付密钥证书，切勿提交
+stripe_config.bat
+
+# 运行时生成的会员数据库（含用户与订单）
+data/*.db
+data/*.db-wal
+data/*.db-shm

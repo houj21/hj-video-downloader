@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, follow">
+  <title>登录 / 注册 · HJ 视频下载</title>
+  <meta name="description" content="注册或登录 HJ 视频下载账号，视频解析与下载永久免费，终身会员解锁 AI 视频总结与字幕下载。">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  {% include 'member_nav.html' %}
+
+  <!-- ============ Hero ============ -->
+  <section class="hero hero--short">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="hero__grid-lines" aria-hidden="true"></div>
+
+    <div class="container hero__content">
+      <div class="hero__badge"><i></i> 视频下载永久免费 · 注册仅需邮箱</div>
+      <h1 class="hero__title">加入 <em>HJ 视频下载</em></h1>
+      <p class="hero__sub">下载与解析无需付费；注册后可开通终身会员，解锁 AI 总结与字幕能力</p>
+    </div>
+  </section>
+
+  <!-- ============ Auth ============ -->
+  <section class="section">
+    <div class="container">
+      <div class="auth" id="authShell" data-next="{{ next_url }}">
+
+        <!-- 左侧：价值主张 -->
+        <aside class="auth-aside">
+          <span class="auth-aside__tag">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.3 6.2H21l-5.2 3.9 1.9 6.4-5.7-4-5.7 4 1.9-6.4L3 8.7h6.7L12 2.5Z"/></svg>
+            为什么需要账号
+          </span>
+          <h2 class="auth-aside__title">下载免费<br><em>会员只解锁 AI 能力</em></h2>
+          <p class="auth-aside__desc">账号只用于识别你的会员身份。即便不登录，也能无限解析与下载视频。</p>
+
+          <ul class="auth-aside__list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><b>视频下载</b>永久免费 · 不限额度</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><b>MP4 / MP3</b> 与最高画质均可免费使用</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span><b>终身会员 ¥100</b> 一次付费解锁 AI 总结</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>付款由 <b>Stripe</b> 处理，我们不接触卡号</span>
+            </li>
+          </ul>
+        </aside>
+
+        <!-- 右侧：表单卡 -->
+        <div class="auth-card">
+          {% if me.logged_in %}
+            <div class="auth-signed">
+              <span class="auth-signed__avatar">{{ me.display[:1]|upper }}</span>
+              <h2 class="auth-signed__title">{{ me.email }}</h2>
+              <p class="auth-signed__desc">
+                {% if me.is_member %}
+                  你已是<b>终身会员</b>：AI 总结、思维导图与字幕下载已全部解锁。
+                {% else %}
+                  当前为<b>免费版</b>：下载解析不限量，AI 总结需要终身会员。
+                {% endif %}
+              </p>
+              <div class="auth-signed__cta">
+                {% if me.is_member %}
+                  <a class="btn btn--primary btn--block" href="/summarize">去体验 AI 视频总结</a>
+                {% else %}
+                  <a class="btn btn--gold btn--block" href="/pricing">查看终身版方案</a>
+                {% endif %}
+                <button class="btn btn--ghost btn--block" type="button" data-logout>退出登录</button>
+              </div>
+            </div>
+          {% else %}
+            <div class="auth-tabs" role="tablist" aria-label="登录或注册">
+              <button class="auth-tab is-active" type="button" role="tab" aria-selected="true" data-auth-tab="login">登录</button>
+              <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="register">注册</button>
+            </div>
+
+            <div class="auth-error" id="authError" role="alert" hidden></div>
+
+            <form class="auth-form" id="panel-login" novalidate>
+              <label class="field" for="loginEmail">
+                <span class="field__label">邮箱</span>
+                <span class="field__wrap">
+                  <svg class="field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2.5"/><polyline points="3.5 6.5 12 13 20.5 6.5"/>
+                  </svg>
+                  <input class="field__input" id="loginEmail" name="email" type="email" autocomplete="email"
+                         placeholder="you@example.com" required>
+                </span>
+              </label>
+
+              <label class="field" for="loginPassword">
+                <span class="field__label">密码</span>
+                <span class="field__wrap">
+                  <input class="field__input" id="loginPassword" name="password" type="password"
+                         autocomplete="current-password" placeholder="请输入密码" required>
+                  <button class="field__suffix" type="button" data-toggle-pw="loginPassword" aria-label="显示密码">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </span>
+              </label>
+
+              <button class="btn btn--primary btn--block auth-submit" id="loginSubmit" type="submit">
+                <span class="auth-submit__text">登录</span>
+              </button>
+
+              <p class="auth-switch"><span>还没有账号？</span>
+                <a href="#" id="loginSwitchLink" data-target="register">立即注册</a></p>
+            </form>
+
+            <form class="auth-form" id="panel-register" novalidate hidden>
+              <label class="field" for="regEmail">
+                <span class="field__label">邮箱</span>
+                <span class="field__wrap">
+                  <svg class="field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2.5"/><polyline points="3.5 6.5 12 13 20.5 6.5"/>
+                  </svg>
+                  <input class="field__input" id="regEmail" name="email" type="email" autocomplete="email"
+                         placeholder="you@example.com" required>
+                </span>
+              </label>
+
+              <label class="field" for="regPassword">
+                <span class="field__label">密码 <i class="field__hint">不少于 8 位</i></span>
+                <span class="field__wrap">
+                  <input class="field__input" id="regPassword" name="password" type="password"
+                         autocomplete="new-password" placeholder="设置一个强密码" required>
+                  <button class="field__suffix" type="button" data-toggle-pw="regPassword" aria-label="显示密码">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </span>
+                <span class="pw-bar" id="pwBar" data-score="0"><i></i></span>
+                <span class="pw-label" id="pwLabel"></span>
+              </label>
+
+              <label class="field" for="regPassword2">
+                <span class="field__label">确认密码</span>
+                <span class="field__wrap">
+                  <input class="field__input" id="regPassword2" name="password2" type="password"
+                         autocomplete="new-password" placeholder="再次输入密码" required>
+                </span>
+              </label>
+
+              <button class="btn btn--primary btn--block auth-submit" id="regSubmit" type="submit">
+                <span class="auth-submit__text">注册并继续</span>
+              </button>
+
+              <p class="auth-switch"><span>已经有账号了？</span>
+                <a href="#" id="regSwitchLink" data-target="login">去登录</a></p>
+              <p class="auth-note">密码经哈希加密后仅存于本机数据库，绝不外传；注册即表示同意站内的版权与合规说明。</p>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% include 'member_footer.html' %}
+
+</body>
+</html>

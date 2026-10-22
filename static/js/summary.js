@@ -918,16 +918,25 @@
     btn.querySelector('span').textContent = '总结中';
     $('#result').hidden = true;
     $('#pipeline').hidden = false;
+    $('#paywall').hidden = true;
     renderPipeline('fetching', 5, false);
     $('#progressText').textContent = '正在提交任务…';
 
     try {
-      const res = await fetch('/api/summarize', {
+      // 走统一请求封装（自动带 X-CSRF-Token），没有 membership.js 时退化为原生 fetch
+      const sender = (window.HJ && window.HJ.request) ? window.HJ.request : fetch;
+      const res = await sender('/api/summarize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url }),
       });
       const data = await res.json();
+
+      if (res.status === 401 || res.status === 403 || data.code === 'membership_required') {
+        showPaywall(data.error, data.logged_in);
+        const guard = new Error(data.error || '需要会员权限');
+        guard.handled = true;      // 已由付费墙接管，无需再弹 toast
+        throw guard;
+      }
       if (!res.ok) throw new Error(data.error || '提交失败');
       state.jobId = data.job_id;
       state.url = url;
@@ -935,12 +944,34 @@
       $('#askLog').innerHTML = '';
       poll();
     } catch (err) {
+      if (err && err.handled) return;
       btn.disabled = false;
       btn.querySelector('span').textContent = '开始总结';
       renderPipeline('fetching', 100, true);
       $('#progressText').textContent = err.message || '提交失败';
       toast(err.message || '提交失败', 'error');
     }
+  }
+
+  /** 会员付费墙：不清空用户已输入的 URL，开通回来可直接续用。 */
+  function showPaywall(message, loggedIn) {
+    const wall = $('#paywall');
+    const pipeline = $('#pipeline');
+    if (pipeline) pipeline.hidden = true;
+    const btn = $('#summarizeBtn');
+    if (btn) {
+      btn.disabled = false;
+      const span = btn.querySelector('span');
+      if (span) span.textContent = '开始总结';
+    }
+    if (!wall) return;
+    const desc = $('#wallDesc');
+    if (desc && message) desc.textContent = message;
+    const login = $('#wallLogin');
+    if (login) login.hidden = !!loggedIn;
+    wall.hidden = false;
+    wall.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast(message || '此功能为终身会员专属', 'error');
   }
 
   function poll() {

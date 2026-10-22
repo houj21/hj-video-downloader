@@ -1,0 +1,25 @@
+{# ============================================================
+   导航登录态 · 移动端菜单条目（≤768px 时桌面 CTA 被隐藏）
+   ============================================================ #}
+{% set nav_next = '' if (request.path == '/account' or request.path.startswith('/pay/')) else request.path %}
+{% if me.logged_in %}
+  <a class="mobile-menu__account" data-csrf="{{ csrf_token }}" href="/pricing">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    {{ me.email }} · {% if me.is_member %}终身会员{% else %}免费版{% endif %}
+  </a>
+  <a href="#" data-logout>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/>
+    </svg>
+    退出登录
+  </a>
+{% else %}
+  <a href="/account{% if nav_next %}?next={{ nav_next|urlencode }}{% endif %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    登录 / 注册
+  </a>
+{% endif %}

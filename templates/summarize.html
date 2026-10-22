@@ -6,6 +6,7 @@
   {% include 'seo/head.html' %}
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/style.css">
+  <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body>
 
@@ -28,10 +29,7 @@
         <a class="nav__link" href="/#platforms">支持平台</a>
       </nav>
 
-      <a class="nav__cta" href="/pricing">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
-        开通会员
-      </a>
+      {% include 'nav_auth.html' %}
 
       <button class="nav__burger" id="burger" aria-label="打开菜单">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -45,6 +43,7 @@
       <a href="/summarize">AI 总结</a>
       <a href="/pricing">定价 · 开通会员</a>
       <a href="/#platforms">支持平台</a>
+      {% include 'nav_auth_mobile.html' %}
     </div>
   </header>
 
@@ -103,6 +102,36 @@
 set LLM_BASE_URL=https://api.deepseek.com
 set LLM_MODEL=deepseek-flash
 call run.bat</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 会员付费墙（未登录 / 非会员点总结时展示） ============ -->
+  <section class="section section--tight no-print" id="paywall" hidden>
+    <div class="container">
+      <div class="wall">
+        <div class="wall__badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6l7-3Z"/><polyline points="9 12 11 14 15 10"/>
+          </svg>
+        </div>
+
+        <h2 class="wall__title">AI 视频总结是<em>终身会员</em>专属</h2>
+        <p class="wall__desc" id="wallDesc">下载与解析永久免费，解锁 AI 总结仅需一次付费 ¥100</p>
+
+        <div class="wall__cta">
+          <a class="btn btn--gold" href="/pricing">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8.5 7 12l5-7 5 7 4-3.5-1.6 9.5H4.6L3 8.5Z"/></svg>
+            查看终身版方案
+          </a>
+          <a class="btn btn--ghost" href="/account?next=%2Fsummarize" id="wallLogin">已有账号？登录</a>
+        </div>
+
+        <div class="wall__tags">
+          <span>一次付费 ¥100</span><span>终身有效 · 不续费</span><span>Stripe 安全支付</span>
+        </div>
+
+        <p class="wall__foot">视频下载、批量下载与音频提取不受任何限制，可继续免费使用。</p>
       </div>
     </div>
   </section>
@@ -296,6 +325,7 @@ call run.bat</pre>
 
   <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
+  <script src="/static/js/membership.js"></script>
   <script src="/static/js/summary.js"></script>
 </body>
 </html>

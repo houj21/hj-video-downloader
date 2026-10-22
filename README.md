@@ -62,6 +62,41 @@ py -3.13 -m venv .venv
 | `SEO_BASE_URL` | `http://127.0.0.1:8899` | 站点对外根地址，canonical / og:url / sitemap 都基于它，**上线务必改成正式域名** |
 | `SEO_LASTMOD` | `2026-10-15` | sitemap 中的 lastmod |
 | `SEO_OG_IMAGE` | `/static/img/og-cover.png` | OG 分享图路径 |
+| `STRIPE_SECRET_KEY` | 空 | Stripe 密钥（`sk_test_` / `sk_live_`）；**未设置时定价页显示支付通道配置中** |
+| `STRIPE_WEBHOOK_SECRET` | 空 | Webhook 签名密钥（`whsec_`），由 Stripe CLI 提供 |
+| `APP_SECRET_KEY` | 随机 | Flask 会话签名密钥；不设则每次启动随机（重启需重新登录） |
+| `STRIPE_PRICE_LIFETIME` | 空 | Stripe 后台创建的 Price ID；留空则按 `PLANS` 金额内联生成 |
+| `STRIPE_PRICE_LIFETIME_AMOUNT` | `10000` | 终身会员价格（单位：分） |
+| `MEMBERSHIP_DB` | `data/hj.db` | 账号与订单 SQLite 路径 |
+
+## 账号与会员（Stripe 支付）
+
+- **下载与解析永久免费**：无需注册即可使用，不涉及任何鉴权。
+- **终身会员 ¥100 一次性买断**：解锁 AI 视频总结、思维导图与字幕 TXT / SRT 下载。
+  支付由 Stripe 托管收银台完成，本站不接触卡号。
+
+本地联调（无公网地址也能完整跑通）：
+
+```powershell
+# 1) 复制配置模板，填入 Dashboard → 开发者 → API 密钥 里的测试 Secret Key
+copy stripe_config.example.bat stripe_config.bat
+
+# 2) 安装 Stripe CLI 并登录（一次性）
+scoop bucket add stripe https://github.com/stripe/scoop-stripe-cli.git
+scoop install stripe
+stripe login --api-key sk_test_你的测试密钥
+
+# 3) 开一个窗口常驻 Webhook 隧道，把屏幕上的 whsec_xxx 填进 stripe_config.bat
+#    （CLI 1.53+ 必须用 --events 显式指定事件，与 membership.SUPPORTED_EVENTS 对应）
+stripe listen --forward-to 127.0.0.1:8899/api/stripe/webhook --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed
+
+# 4) 另一个窗口启动站点
+stripe_config.bat
+```
+
+然后用测试卡 `4242 4242 4242 4242`（有效期任意未来值、CVC 任意三位）完成支付即可。
+更完整的场景验收表与幂等验证步骤见
+[docs/会员购买-Stripe支付-设计文档.md](docs/会员购买-Stripe支付-设计文档.md) 第十章。
 
 ## 目录结构
 
