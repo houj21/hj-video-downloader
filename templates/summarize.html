@@ -58,7 +58,12 @@
       <h1 class="hero__title">一分钟<em>读懂</em>一小时视频</h1>
       <p class="hero__sub">粘贴链接，AI 自动提炼带时间戳的章节大纲、核心知识要点与思维导图</p>
 
-      <div class="searchbar">
+      <div class="src-tabs no-print" role="tablist" aria-label="视频来源">
+        <button class="src-tab is-active" id="tabOnline" role="tab" aria-selected="true" type="button">在线视频</button>
+        <button class="src-tab" id="tabLocal" role="tab" aria-selected="false" type="button">本地视频</button>
+      </div>
+
+      <div class="searchbar" id="onlinePane">
         <span class="searchbar__icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -74,6 +79,35 @@
             <circle cx="12" cy="12" r="4"/>
           </svg>
           <span>开始总结</span>
+        </button>
+      </div>
+
+      <div class="upload-pane" id="localPane" hidden>
+        <div class="upload-zone" id="uploadZone" tabindex="0" role="button"
+             aria-label="选择本地视频或音频文件">
+          <svg class="upload-zone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="upload-zone__title" id="uploadZoneTitle">点击或拖入本地视频 / 音频文件</p>
+          <p class="upload-zone__hint">支持 mp4 · mkv · mov · avi · webm · mp3 · wav 等，最大 1GB</p>
+          <input class="upload-zone__input" id="videoFile" type="file" hidden
+                 accept=".mp4,.mkv,.mov,.avi,.webm,.flv,.ts,.m4v,.wmv,.mp3,.wav,.m4a,.aac,.flac,.ogg,.opus">
+        </div>
+
+        <div class="upload-sub">
+          <label class="upload-sub__label" for="subFile">外挂字幕（可选，.srt / .vtt / .ass / .ssa）</label>
+          <input class="upload-sub__input" id="subFile" type="file" accept=".srt,.vtt,.ass,.ssa">
+          <p class="upload-sub__hint">MKV 等容器的内封字幕会自动提取；画面烧录的硬字幕无法识别</p>
+        </div>
+
+        <button class="btn btn--primary upload-btn" id="uploadBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+          <span id="uploadBtnText">上传并总结</span>
         </button>
       </div>
 

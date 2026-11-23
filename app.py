@@ -25,7 +25,22 @@ app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNLOAD_DIR = os.path.join(BASE_DIR, "downloads")
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# 本地上传：上限默认 1GB，可用环境变量覆盖；媒体与字幕扩展名白名单
+UPLOAD_MAX_BYTES = int(os.environ.get("UPLOAD_MAX_BYTES", 1024 ** 3))
+UPLOAD_MEDIA_EXTS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv", ".ts",
+                     ".m4v", ".wmv", ".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus"}
+UPLOAD_SUB_EXTS = {".srt", ".vtt", ".ass", ".ssa"}
+
+# 服务启动时清空 uploads 残留（上次异常退出可能留下孤儿文件）
+for _name in os.listdir(UPLOAD_DIR):
+    try:
+        os.remove(os.path.join(UPLOAD_DIR, _name))
+    except OSError:
+        pass
 
 # ---- tuning (all overridable by environment variables) ----
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", 3))       # parallel downloads
@@ -801,6 +816,105 @@ def start_summary():
         except Exception as exc:                      # 兜底：不把堆栈暴露给前端
             jobs[job_id]["status"] = "error"
             jobs[job_id]["error"] = f"总结失败：{type(exc).__name__}"
+
+    thread = threading.Thread(target=worker)
+    thread.daemon = True
+    thread.start()
+    return jsonify({"job_id": job_id})
+
+
+def _save_upload(file_storage, ext, max_bytes):
+    """把上传文件流式写到 uploads/（UUID 重命名），超限抛 SummaryError。
+
+    分块写入并实时计数：不把大文件读进内存，也避免 Werkzeug 临时文件
+    直接以原始文件名落盘带来的路径注入风险。
+    """
+    target = os.path.join(UPLOAD_DIR, uuid.uuid4().hex + ext)
+    written = 0
+    try:
+        with open(target, "wb") as fh:
+            while True:
+                chunk = file_storage.stream.read(1024 * 1024)
+                if not chunk:
+                    break
+                written += len(chunk)
+                if written > max_bytes:
+                    raise summarizer.SummaryError(
+                        f"文件超过大小上限（{max_bytes // (1024 ** 2)}MB），请压缩或裁剪后再上传")
+                fh.write(chunk)
+    except Exception:
+        try:
+            os.remove(target)
+        except OSError:
+            pass
+        raise
+    return target, written
+
+
+@app.route("/api/summarize/upload", methods=["POST"])
+@membership_required
+def summarize_upload():
+    """本地视频/音频总结：上传媒体文件 + 可选外挂字幕，走与在线视频相同的总结管线。"""
+    video = request.files.get("video")
+    if not video or not video.filename:
+        return jsonify({"error": "请选择本地视频或音频文件"}), 400
+
+    video_ext = os.path.splitext(video.filename)[1].lower()
+    if video_ext not in UPLOAD_MEDIA_EXTS:
+        return jsonify({"error": "不支持的文件格式，请上传 mp4 / mkv / mov / avi / webm 等常见视频或音频文件"}), 400
+
+    sub_ext = ""
+    subtitle = request.files.get("subtitle")
+    if subtitle and subtitle.filename:
+        sub_ext = os.path.splitext(subtitle.filename)[1].lower()
+        if sub_ext not in UPLOAD_SUB_EXTS:
+            return jsonify({"error": "字幕格式不支持，请上传 .srt / .vtt / .ass / .ssa 字幕文件"}), 400
+
+    video_path = sub_path = None
+    try:
+        video_path, _size = _save_upload(video, video_ext, UPLOAD_MAX_BYTES)
+        if sub_ext:
+            sub_path, _ = _save_upload(subtitle, sub_ext, 10 * 1024 * 1024)
+    except summarizer.SummaryError as exc:
+        for leftover in (video_path, sub_path):
+            if leftover:
+                try:
+                    os.remove(leftover)
+                except OSError:
+                    pass
+        return jsonify({"error": str(exc)}), 413
+
+    job_id = uuid.uuid4().hex[:10]
+    jobs[job_id] = {
+        "kind": "summary",
+        "status": "running",
+        "stage": "fetching",
+        "stage_text": "正在读取本地字幕",
+        "percent": 5,
+        "url": video.filename,
+        "local": True,
+        "created": time.time(),
+    }
+
+    def worker():
+        try:
+            summarizer.run_summary_from_file(
+                jobs[job_id], video_path, sub_path, original_name=video.filename)
+            jobs[job_id]["status"] = "done"
+        except summarizer.SummaryError as exc:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = str(exc)
+        except Exception as exc:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = f"总结失败：{type(exc).__name__}"
+        finally:
+            # 任务结束即清理上传的原始文件（字幕已被复制进临时目录，同样可删）
+            for leftover in (video_path, sub_path):
+                if leftover:
+                    try:
+                        os.remove(leftover)
+                    except OSError:
+                        pass
 
     thread = threading.Thread(target=worker)
     thread.daemon = True

@@ -1252,6 +1252,123 @@
     }, 1200);
   }
 
+  /* ---------- 来源切换：在线视频 / 本地视频 ---------- */
+  function bindSourceTabs() {
+    const tabOnline = $('#tabOnline');
+    const tabLocal = $('#tabLocal');
+    if (!tabOnline || !tabLocal) return;
+    const onlinePane = $('#onlinePane');
+    const localPane = $('#localPane');
+    function activate(which) {
+      const online = which === 'online';
+      tabOnline.classList.toggle('is-active', online);
+      tabLocal.classList.toggle('is-active', !online);
+      tabOnline.setAttribute('aria-selected', String(online));
+      tabLocal.setAttribute('aria-selected', String(!online));
+      onlinePane.hidden = !online;
+      localPane.hidden = online;
+    }
+    tabOnline.addEventListener('click', () => activate('online'));
+    tabLocal.addEventListener('click', () => activate('local'));
+  }
+
+  /* ---------- 本地视频上传并总结 ---------- */
+  function bindUpload() {
+    const zone = $('#uploadZone');
+    const fileInput = $('#videoFile');
+    const zoneTitle = $('#uploadZoneTitle');
+    const subInput = $('#subFile');
+    const btn = $('#uploadBtn');
+    const btnText = $('#uploadBtnText');
+    if (!zone || !fileInput || !btn) return;
+
+    zone.addEventListener('click', () => fileInput.click());
+    zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+    ['dragover', 'dragenter'].forEach((ev) => zone.addEventListener(ev, (e) => {
+      e.preventDefault(); zone.classList.add('is-drag');
+    }));
+    ['dragleave', 'drop'].forEach((ev) => zone.addEventListener(ev, (e) => {
+      e.preventDefault(); zone.classList.remove('is-drag');
+    }));
+    zone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) { fileInput.files = e.dataTransfer.files; showFileName(file); }
+    });
+    fileInput.addEventListener('change', () => showFileName(fileInput.files && fileInput.files[0]));
+
+    function showFileName(file) {
+      if (!file || !zoneTitle) return;
+      zoneTitle.textContent = '已选择：' + file.name;
+      zoneTitle.classList.add('is-file');
+    }
+
+    btn.addEventListener('click', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { toast('请先选择本地视频或音频文件', 'error'); return; }
+      startLocalSummary(file, subInput.files && subInput.files[0]);
+    });
+  }
+
+  function startLocalSummary(file, subFile) {
+    const btn = $('#uploadBtn');
+    const btnText = $('#uploadBtnText');
+    btn.disabled = true;
+    if (btnText) btnText.textContent = '上传中';
+    $('#result').hidden = true;
+    $('#pipeline').hidden = false;
+    $('#paywall').hidden = true;
+    renderPipeline('fetching', 0, false);
+    $('#progressText').textContent = '上传中 0%';
+
+    const formData = new FormData();
+    formData.append('video', file, file.name);
+    if (subFile) formData.append('subtitle', subFile, subFile.name);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/summarize/upload');
+    const csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+    if (csrf) xhr.setRequestHeader('X-CSRF-Token', csrf);
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        renderPipeline('fetching', Math.min(45, pct * 0.45), false);
+        $('#progressText').textContent = '上传中 ' + pct + '%';
+      }
+    });
+    xhr.addEventListener('load', () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText || '{}'); } catch (e) { /* 非 JSON 响应按失败处理 */ }
+      if (xhr.status === 401 || xhr.status === 403) {
+        btn.disabled = false;
+        if (btnText) btnText.textContent = '上传并总结';
+        showPaywall(data.error, data.logged_in);
+        return;
+      }
+      if (xhr.status !== 200 || !data.job_id) {
+        btn.disabled = false;
+        if (btnText) btnText.textContent = '上传并总结';
+        renderPipeline('fetching', 100, true);
+        $('#progressText').textContent = data.error || '上传失败';
+        toast(data.error || '上传失败', 'error');
+        return;
+      }
+      state.jobId = data.job_id;
+      state.url = file.name;
+      state.history = [];
+      $('#askLog').innerHTML = '';
+      if (btnText) btnText.textContent = '总结中';
+      poll();
+    });
+    xhr.addEventListener('error', () => {
+      btn.disabled = false;
+      if (btnText) btnText.textContent = '上传并总结';
+      renderPipeline('fetching', 100, true);
+      $('#progressText').textContent = '上传失败，请检查网络后重试';
+      toast('上传失败，请检查网络后重试', 'error');
+    });
+    xhr.send(formData);
+  }
+
   /* ---------- 绑定 ---------- */
   function bind() {
     const burger = $('#burger');
@@ -1259,6 +1376,8 @@
 
     $('#summarizeBtn').addEventListener('click', startSummarize);
     $('#urlInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') startSummarize(); });
+    bindSourceTabs();
+    bindUpload();
 
     document.querySelectorAll('.sum-tab').forEach((tab) => {
       tab.addEventListener('click', () => {

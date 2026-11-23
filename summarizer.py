@@ -240,11 +240,12 @@ def fetch_subtitle(url, timeout=180):
 
 
 def _no_subtitle_reason(log):
-    """区分「真的没字幕」和「需要登录 / 被风控 / 网络问题」，给出可操作提示。
+    """区分「硬字幕」「需要登录」「被风控」「网络问题」等，给出可操作提示。
 
     实测（2026-10）：B站未登录时 yt-dlp 提示 “Subtitles are only available when
     logged in”；YouTube 常提示 “Sign in to confirm you're not a bot”。这类情况
-    如果统一报「没有字幕」会严重误导用户。
+    如果统一报「没有字幕」会严重误导用户。兜底分支默认按「硬字幕」解释——
+    画面里看得见的字不代表存在可提取的文本轨道（2026-11 用户实测 RAG 教程视频）。
     """
     text = (log or "").lower()
     if "only available when logged in" in text or "subtitles are only available" in text:
@@ -259,7 +260,13 @@ def _no_subtitle_reason(log):
         return "无法访问该视频所在站点，请检查网络连接后重试。"
     if "private" in text or "login" in text or "authentication" in text:
         return "该视频需要登录才能访问字幕，请在项目根目录放置 cookies.txt 后重试。"
-    return "该视频没有可用字幕，本工具当前仅支持有字幕的视频（后续版本将支持语音转写）"
+    # 兜底：大概率是「硬字幕」——字幕被烧录进视频画面，只是像素而非文本轨道，
+    # yt-dlp 报 has no subtitles / has no automatic captions 也归到这里。
+    return (
+        "该视频没有可提取的字幕轨。画面里显示的字幕可能是「硬字幕」"
+        "（烧录在视频画面中，不含文本数据），本工具暂不支持识别，"
+        "建议换用带 CC 字幕的视频测试（播放器字幕按钮点开有语言列表即为软字幕）。"
+    )
 
 
 def _find_subtitle(work_dir):
@@ -314,11 +321,18 @@ def _parse_time(text):
 
 
 def parse_subtitle(path):
-    """解析字幕文件为 [{start, end, text}]，并做去重与短句合并。"""
+    """解析字幕文件为 [{start, end, text}]，支持 SRT / VTT / ASS / SSA。"""
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         raw = fh.read()
     raw = raw.replace("\ufeff", "")
 
+    if re.search(r"(?mi)^\s*\[events\]", raw):
+        return _parse_ass(raw)
+    return _parse_srt_vtt(raw)
+
+
+def _parse_srt_vtt(raw):
+    """SRT / WebVTT：按 '-->' 时间行切分 cue。"""
     cues = []
     lines = raw.splitlines()
     index = 0
@@ -355,6 +369,55 @@ def clean_cue_text(text):
     text = _TAG_RE.sub("", text)
     text = text.replace("\\N", " ").replace("\\n", " ")
     return re.sub(r"\s+", " ", text).strip()
+
+
+_ASS_TIME_RE = re.compile(r"^(\d+):(\d{1,2}):(\d{1,2})[.,](\d{1,3})$")
+
+
+def _parse_ass_time(text):
+    """解析 ASS 时间 'H:MM:SS.CS'（百分秒），返回秒（float）。"""
+    m = _ASS_TIME_RE.match(str(text).strip())
+    if not m:
+        return None
+    h, mnt, sec, frac = m.groups()
+    value = int(h) * 3600 + int(mnt) * 60 + int(sec) + int(frac[:2].ljust(2, "0")) / 100.0
+    return value
+
+
+def _parse_ass(raw):
+    """解析 ASS/SSA 的 [Events] 段 Dialogue 行。
+
+    Dialogue 的最后一个字段是文本（可含逗号），因此按 Format 声明的字段数做
+    定长拆分；Style 内嵌的花括号覆盖标签由 clean_cue_text 统一清理。
+    """
+    cues = []
+    in_events = False
+    fields = None
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("["):
+            in_events = stripped.lower() == "[events]"
+            fields = None
+            continue
+        if not in_events or not stripped:
+            continue
+        lowered = stripped.lower()
+        if lowered.startswith("format:"):
+            fields = [f.strip().lower() for f in stripped[7:].split(",")]
+            continue
+        if not lowered.startswith("dialogue:") or not fields:
+            continue
+        values = stripped[9:].split(",", len(fields) - 1)
+        if len(values) < len(fields):
+            continue
+        row = dict(zip(fields, values))
+        start = _parse_ass_time(row.get("start", ""))
+        end = _parse_ass_time(row.get("end", ""))
+        text = clean_cue_text(row.get("text", ""))
+        if start is None or end is None or not text:
+            continue
+        cues.append({"start": start, "end": end if end > start else start + 1.0, "text": text})
+    return normalize_cues(cues)
 
 
 def _norm_key(text):
@@ -1119,7 +1182,6 @@ def run_summary(job, url):
     progress(10, "正在抓取字幕")
     sub_path, meta = fetch_subtitle(url)
 
-    job["meta"] = meta
     job["stage"] = "parsing"
     progress(40, "正在解析时间轴")
     try:
@@ -1127,9 +1189,20 @@ def run_summary(job, url):
     finally:
         shutil.rmtree(os.path.dirname(sub_path), ignore_errors=True)
 
+    return _finish_summary(job, meta, cues)
+
+
+def _finish_summary(job, meta, cues):
+    """run_summary 与本地视频管线共用的后半段：时间轴 -> 总结 -> 落盘 job。"""
+    def progress(value, note=""):
+        job["percent"] = min(99, max(job.get("percent", 0), int(value)))
+        if note:
+            job["stage_text"] = note
+
     if not cues:
         raise SummaryError("字幕内容为空，无法总结")
 
+    job["meta"] = meta
     transcript = cues_to_transcript(cues)
     job["cues"] = cues
     job["transcript"] = transcript
@@ -1144,3 +1217,157 @@ def run_summary(job, url):
     job["stage_text"] = "总结完成"
     job["finished_at"] = time.time()
     return result
+
+
+# --------------------------------------------------------------------------
+# 本地视频总结：外挂字幕优先，其次 ffmpeg 提取内封字幕轨
+# --------------------------------------------------------------------------
+
+def media_duration(path):
+    """ffprobe 读取媒体时长（秒），失败返回 None。"""
+    ffprobe = shutil.which("ffprobe")
+    if not ffprobe:
+        return None
+    cmd = [ffprobe, "-v", "error", "-show_entries", "format=duration",
+           "-of", "default=noprint_wrappers=1:nokey=1", str(path)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace",
+                              timeout=30, env=_child_env())
+    except Exception:
+        return None
+    try:
+        return float((proc.stdout or "").strip())
+    except ValueError:
+        return None
+
+
+# ffmpeg 能转成 srt 的文本字幕编码（图形字幕如 PGS / DVD subtitle 不在此列）
+_TEXT_SUB_CODECS = {"subrip", "srt", "ass", "ssa", "webvtt", "mov_text", "text", "vplayer", "sami"}
+
+
+def embedded_subtitle_stream(path):
+    """返回第一个可提取的文本字幕流信息 dict（index/codec/language），没有则 None。"""
+    ffprobe = shutil.which("ffprobe")
+    if not ffprobe:
+        return None
+    cmd = [ffprobe, "-v", "error", "-select_streams", "s",
+           "-show_entries", "stream=index,codec_name:stream_tags=language,title",
+           "-of", "json", str(path)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace",
+                              timeout=30, env=_child_env())
+    except Exception:
+        return None
+    try:
+        streams = json.loads(proc.stdout or "{}").get("streams") or []
+    except json.JSONDecodeError:
+        return []
+    for stream in streams:
+        if (stream.get("codec_name") or "").lower() in _TEXT_SUB_CODECS:
+            return stream
+    return None
+
+
+def extract_embedded_subtitle(video_path, work_dir):
+    """提取视频内封的文本字幕流为 srt；失败（无流/图形字幕/ffmpeg 缺失）返回 None。
+
+    提取失败不抛错的原因：无内封字幕是常见情形，交由调用方给出统一提示；
+    但「检测到字幕流却无法提取」对用户有误导性，因此图形字幕单独给出明确错误。
+    """
+    ffprobe = shutil.which("ffprobe")
+    if not ffprobe:
+        return None
+    stream = embedded_subtitle_stream(video_path)
+    if not stream:
+        # 有字幕流但全是图形字幕时，给用户一个准确的失败原因
+        cmd = [ffprobe, "-v", "error", "-select_streams", "s", "-show_entries",
+               "stream=index,codec_name", "-of", "json", str(video_path)]
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace",
+                                  timeout=30, env=_child_env())
+            streams = json.loads(proc.stdout or "{}").get("streams") or []
+        except Exception:
+            streams = []
+        if streams:
+            raise SummaryError(
+                "视频内嵌的是图形字幕（如 PGS / DVD 字幕，字幕是图片而非文本），"
+                "无法直接提取。请提供外挂字幕文件（.srt / .vtt / .ass）后重新上传。"
+            )
+        return None
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        raise SummaryError("检测到视频内封字幕轨，但本机未找到 ffmpeg，无法提取；请安装 ffmpeg 或提供外挂字幕文件")
+    out_path = os.path.join(work_dir, "embedded.srt")
+    cmd = [ffmpeg, "-y", "-v", "error", "-nostdin", "-i", str(video_path),
+           "-map", f"0:s:{stream['index']}", out_path]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace",
+                              timeout=120, env=_child_env())
+    except subprocess.TimeoutExpired:
+        return None
+    if proc.returncode != 0 or not os.path.isfile(out_path) or os.path.getsize(out_path) == 0:
+        return None
+    return out_path
+
+
+def run_summary_from_file(job, video_path, subtitle_path=None, original_name=None):
+    """本地视频/音频总结管线。直接改写 job 字典。
+
+    字幕来源优先级：外挂字幕文件 > 视频内封字幕轨（ffmpeg 提取）。
+    都没有时明确报错并解释硬字幕场景，不做语音识别（ASR 为后续规划）。
+    original_name：上传时的原始文件名——服务端落盘用 UUID 重命名，
+    展示标题必须取用户可见的名字，而不是 uuid.ext。
+    """
+    def progress(value, note=""):
+        job["percent"] = min(99, max(job.get("percent", 0), int(value)))
+        if note:
+            job["stage_text"] = note
+
+    job["stage"] = "fetching"
+    progress(8, "正在读取本地字幕")
+
+    display_name = original_name or os.path.basename(video_path)
+    meta = {
+        "title": os.path.splitext(os.path.basename(display_name))[0],
+        "thumbnail": "",
+        "uploader": "",
+        "webpage_url": "",
+        "local": True,
+    }
+
+    work_dir = tempfile.mkdtemp(prefix="hjlocal_")
+    try:
+        sub_path = None
+        if subtitle_path and os.path.isfile(subtitle_path):
+            sub_path = os.path.join(work_dir, "local" + os.path.splitext(subtitle_path)[1].lower())
+            shutil.copyfile(subtitle_path, sub_path)
+            progress(20, "已读取外挂字幕")
+        else:
+            progress(15, "正在检测视频内封字幕")
+            sub_path = extract_embedded_subtitle(video_path, work_dir)
+            if sub_path:
+                progress(20, "已提取内封字幕")
+
+        if not sub_path:
+            raise SummaryError(
+                "未找到可用字幕：本地视频总结需要外挂字幕文件（.srt / .vtt / .ass）"
+                "或视频内封字幕轨（MKV 等容器常见）。画面烧录的硬字幕无法提取，"
+                "可以先下载对应的字幕文件再上传。"
+            )
+
+        job["stage"] = "parsing"
+        progress(40, "正在解析时间轴")
+        cues = parse_subtitle(sub_path)
+
+        if not meta.get("duration"):
+            meta["duration"] = media_duration(video_path)
+        if not meta.get("duration") and cues:
+            meta["duration"] = cues[-1]["end"]
+
+        return _finish_summary(job, meta, cues)
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
